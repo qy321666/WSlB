@@ -1,2 +1,0 @@
-method,src_load,tgt_load,k,seed,acc,macro_f1,recall
-rand_dann,0,3,3,0,0.9651,0.9514,1.000;1.000;1.000;1.000;1.000;1.000;1.000;1.000;0.547;1.000

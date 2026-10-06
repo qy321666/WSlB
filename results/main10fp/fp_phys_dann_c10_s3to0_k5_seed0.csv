@@ -1,2 +1,0 @@
-method,src_load,tgt_load,k,seed,acc,macro_f1,recall
-fp_phys_dann,3,0,5,0,0.9885,0.9873,1.000;1.000;1.000;0.874;1.000;1.000;1.000;1.000;1.000;1.000

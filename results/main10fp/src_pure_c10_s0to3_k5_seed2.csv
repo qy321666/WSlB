@@ -1,2 +1,0 @@
-method,src_load,tgt_load,k,seed,acc,macro_f1,recall
-src_pure,0,3,5,2,0.5401,0.5841,0.011;0.968;1.000;0.000;1.000;0.000;1.000;1.000;1.000;1.000
