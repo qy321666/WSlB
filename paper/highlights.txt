@@ -1,0 +1,11 @@
+Highlights
+(Elsevier Mechanical Systems and Signal Processing requirement: 3-5 bullet
+points, each at most 85 characters including spaces. Counts verified by
+tools/check_submission.py, which counts the bullet text including spaces and
+the final period.)
+
+1. CWRU's fault-by-load cells are single recordings: class identity is the recording.   [82]
+2. A calibrated twin yields spectrally identical classes; twin-only F1 is 0.123.        [77]
+3. Shared-recording windows inflate few-shot macro-F1 by 0.15-0.19.                     [64]
+4. Cross-recording evaluation erases the advantage of every augmentation tested.        [77]
+5. Envelopes from k=5 target labels beat physical synthesis on both benchmarks.         [76]

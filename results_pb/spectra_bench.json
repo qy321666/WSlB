@@ -1,0 +1,75 @@
+{
+ "cwru": {
+  "n_class": 10,
+  "n_specimen_per_class": 1,
+  "window": 1024,
+  "between_class_cos": {
+   "0": 0.6263511206136267,
+   "1": 0.6294534559268921,
+   "2": 0.618959037108629,
+   "3": 0.6260704082968956
+  },
+  "between_class_cos_std": {
+   "0": 0.24883725424317976,
+   "1": 0.24459421487346042,
+   "2": 0.2372390101951049,
+   "3": 0.2269611438420906
+  },
+  "same_class_across_load_cos": {
+   "S0->S1": [
+    0.8696202129715715,
+    0.07708992561852111
+   ],
+   "S1->S2": [
+    0.870869776167208,
+    0.1007541581266018
+   ],
+   "S0->S3": [
+    0.8471497838099985,
+    0.061921384029855066
+   ]
+  }
+ },
+ "paderborn": {
+  "n_specimen_per_class": {
+   "HEALTHY": 6,
+   "IR": 6,
+   "OR": 9
+  },
+  "window": 4096,
+  "condition": "N15_M07_F10",
+  "high_pass_hz": 0.0,
+  "within_class_across_bearing_cos": [
+   0.9999847011965812,
+   1.4681199432941167e-05,
+   66
+  ],
+  "between_class_across_bearing_cos": [
+   0.9999812987688197,
+   1.3497603234493776e-05,
+   144
+  ],
+  "n_bearings": 21
+ },
+ "paderborn_hp2000": {
+  "n_specimen_per_class": {
+   "HEALTHY": 6,
+   "IR": 6,
+   "OR": 9
+  },
+  "window": 4096,
+  "condition": "N15_M07_F10",
+  "high_pass_hz": 2000,
+  "within_class_across_bearing_cos": [
+   0.9916158390862914,
+   0.00998976815574883,
+   66
+  ],
+  "between_class_across_bearing_cos": [
+   0.9890343240335119,
+   0.009911397768758932,
+   144
+  ],
+  "n_bearings": 21
+ }
+}

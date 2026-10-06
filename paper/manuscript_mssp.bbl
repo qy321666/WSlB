@@ -1,0 +1,204 @@
+\begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\expandafter\ifx\csname href\endcsname\relax
+  \def\href#1#2{#2} \def\path#1{#1}\fi
+
+\bibitem{ganin2016dann}
+Y.~Ganin, E.~Ustinova, H.~Ajakan, P.~Germain, H.~Larochelle, F.~Laviolette,
+  M.~Marchand, V.~Lempitsky, Domain-adversarial training of neural networks,
+  Journal of Machine Learning Research 17~(59) (2016) 1--35.
+
+\bibitem{sun2016coral}
+B.~Sun, J.~Feng, K.~Saenko, Return of frustratingly easy domain adaptation,
+  Proceedings of the AAAI Conference on Artificial Intelligence 30~(1) (2016).
+\newblock \href {https://doi.org/10.1609/aaai.v30i1.10306}
+  {\path{doi:10.1609/aaai.v30i1.10306}}.
+
+\bibitem{ming2026physics}
+Z.~Ming, B.~Tang, L.~Deng, X.~Zhang, Z.~Li, Physics-enhanced
+  simulation-to-measurement translation for rolling bearing fault diagnosis
+  under limited samples, Engineering Applications of Artificial Intelligence
+  164 (2026) 113279.
+\newblock \href {https://doi.org/10.1016/j.engappai.2025.113279}
+  {\path{doi:10.1016/j.engappai.2025.113279}}.
+
+\bibitem{xiao2026sim2real}
+X.~Xiao, Y.~He, J.~Su, K.~Hu, Domain adaptation from simulation to reality: A
+  {GAN}- and {MK-MMD}-based transfer learning approach for bearing fault
+  diagnosis, Applied Sciences 16~(3) (2026) 1407.
+\newblock \href {https://doi.org/10.3390/app16031407}
+  {\path{doi:10.3390/app16031407}}.
+
+\bibitem{liu2024twin}
+X.~Liu, Y.~Jin, F.~Yang, Y.~Kang, L.~Bo, Twin data multimode collaborative
+  transfer learning for bearing failure diagnosis, Engineering Applications of
+  Artificial Intelligence 137 (2024) 109142.
+\newblock \href {https://doi.org/10.1016/j.engappai.2024.109142}
+  {\path{doi:10.1016/j.engappai.2024.109142}}.
+
+\bibitem{shao2019gan}
+S.~Shao, P.~Wang, R.~Yan, Generative adversarial networks for data augmentation
+  in machine fault diagnosis, Computers in Industry 106 (2019) 85--93.
+\newblock \href {https://doi.org/10.1016/j.compind.2019.01.001}
+  {\path{doi:10.1016/j.compind.2019.01.001}}.
+
+\bibitem{karniadakis2021piml}
+G.~E. Karniadakis, I.~G. Kevrekidis, L.~Lu, P.~Perdikaris, S.~Wang, L.~Yang,
+  Physics-informed machine learning, Nature Reviews Physics 3~(6) (2021)
+  422--440.
+\newblock \href {https://doi.org/10.1038/s42254-021-00314-5}
+  {\path{doi:10.1038/s42254-021-00314-5}}.
+
+\bibitem{tao2019dt}
+F.~Tao, H.~Zhang, A.~Liu, A.~Y.~C. Nee, Digital twin in industry:
+  State-of-the-art, IEEE Transactions on Industrial Informatics 15~(4) (2019)
+  2405--2415.
+\newblock \href {https://doi.org/10.1109/TII.2018.2873186}
+  {\path{doi:10.1109/TII.2018.2873186}}.
+
+\bibitem{xu2024dt}
+Y.~Xu, Q.~Jiang, S.~Li, Z.~Zhao, B.~Sun, G.~Q. Huang, Digital twin-driven
+  discriminative graph learning networks for cross-domain bearing fault
+  recognition, Computers \& Industrial Engineering 193 (2024) 110292.
+\newblock \href {https://doi.org/10.1016/j.cie.2024.110292}
+  {\path{doi:10.1016/j.cie.2024.110292}}.
+
+\bibitem{zhang2023dt}
+Y.~Zhang, J.~C. Ji, Z.~Ren, Q.~Ni, F.~Gu, K.~Feng, Digital twin-driven partial
+  domain adaptation network for intelligent fault diagnosis of rolling bearing,
+  Reliability Engineering \& System Safety 234 (2023) 109186.
+\newblock \href {https://doi.org/10.1016/j.ress.2023.109186}
+  {\path{doi:10.1016/j.ress.2023.109186}}.
+
+\bibitem{kumar2024dt}
+A.~Kumar, R.~Kumar, J.~Xiang, Z.~Qiao, Y.~Zhou, H.~Shao, Digital twin-assisted
+  ai framework based on domain adaptation for bearing defect diagnosis in the
+  centrifugal pump, Measurement 235 (2024) 115013.
+\newblock \href {https://doi.org/10.1016/j.measurement.2024.115013}
+  {\path{doi:10.1016/j.measurement.2024.115013}}.
+
+\bibitem{lei2020roadmap}
+Y.~Lei, B.~Yang, X.~Jiang, F.~Jia, N.~Li, A.~K. Nandi, Applications of machine
+  learning to machine fault diagnosis: A review and roadmap, Mechanical Systems
+  and Signal Processing 138 (2020) 106587.
+\newblock \href {https://doi.org/10.1016/j.ymssp.2019.106587}
+  {\path{doi:10.1016/j.ymssp.2019.106587}}.
+
+\bibitem{zhao2020benchmark}
+Z.~Zhao, T.~Li, J.~Wu, C.~Sun, S.~Wang, R.~Yan, X.~Chen, Deep learning
+  algorithms for rotating machinery intelligent diagnosis: An open source
+  benchmark study, ISA Transactions 107 (2020) 224--255.
+\newblock \href {https://doi.org/10.1016/j.isatra.2020.08.010}
+  {\path{doi:10.1016/j.isatra.2020.08.010}}.
+
+\bibitem{wang2018dasurvey}
+M.~Wang, W.~Deng, Deep visual domain adaptation: A survey, Neurocomputing 312
+  (2018) 135--153.
+\newblock \href {https://doi.org/10.1016/j.neucom.2018.05.083}
+  {\path{doi:10.1016/j.neucom.2018.05.083}}.
+
+\bibitem{zhao2021transfer}
+Z.~Zhao, Q.~Zhang, X.~Yu, C.~Sun, S.~Wang, R.~Yan, X.~Chen, Applications of
+  unsupervised deep transfer learning to intelligent fault diagnosis: A survey
+  and comparative study, IEEE Transactions on Instrumentation and Measurement
+  70 (2021) 1--28.
+\newblock \href {https://doi.org/10.1109/TIM.2021.3116309}
+  {\path{doi:10.1109/TIM.2021.3116309}}.
+
+\bibitem{wang2020fewshot}
+S.~Wang, D.~Wang, D.~Kong, J.~Wang, W.~Li, Few-shot rolling bearing fault
+  diagnosis with metric-based meta learning, Sensors 20~(22) (2020) 6437.
+\newblock \href {https://doi.org/10.3390/s20226437}
+  {\path{doi:10.3390/s20226437}}.
+
+\bibitem{jiao2020cnn}
+J.~Jiao, M.~Zhao, J.~Lin, K.~Liang, A comprehensive review on convolutional
+  neural network in machine fault diagnosis, Neurocomputing 417 (2020) 36--63.
+\newblock \href {https://doi.org/10.1016/j.neucom.2020.07.088}
+  {\path{doi:10.1016/j.neucom.2020.07.088}}.
+
+\bibitem{tobin2017domain}
+J.~Tobin, R.~Fong, A.~Ray, J.~Schneider, W.~Zaremba, P.~Abbeel, Domain
+  randomization for transferring deep neural networks from simulation to the
+  real world, in: IEEE/RSJ International Conference on Intelligent Robots and
+  Systems (IROS), 2017, pp. 23--30.
+\newblock \href {https://doi.org/10.1109/IROS.2017.8202133}
+  {\path{doi:10.1109/IROS.2017.8202133}}.
+
+\bibitem{theiler1992surrogate}
+J.~Theiler, S.~Eubank, A.~Longtin, B.~Galdrikian, J.~Doyne~Farmer, Testing for
+  nonlinearity in time series: the method of surrogate data, Physica D:
+  Nonlinear Phenomena 58~(1-4) (1992) 77--94.
+\newblock \href {https://doi.org/10.1016/0167-2789(92)90102-S}
+  {\path{doi:10.1016/0167-2789(92)90102-S}}.
+
+\bibitem{schreiber2000surrogate}
+T.~Schreiber, A.~Schmitz, Surrogate time series, Physica D: Nonlinear Phenomena
+  142~(3-4) (2000) 346--382.
+\newblock \href {https://doi.org/10.1016/S0167-2789(00)00043-9}
+  {\path{doi:10.1016/S0167-2789(00)00043-9}}.
+
+\bibitem{smith2015cwru}
+W.~A. Smith, R.~B. Randall, Rolling element bearing diagnostics using the case
+  western reserve university data: A benchmark study, Mechanical Systems and
+  Signal Processing 64 (2015) 100--131.
+
+\bibitem{randall2011rolling}
+R.~B. Randall, J.~Antoni, Rolling element bearing diagnostics---a tutorial,
+  Mechanical Systems and Signal Processing 25~(2) (2011) 485--520.
+
+\bibitem{geirhos2020shortcut}
+R.~Geirhos, J.-H. Jacobsen, C.~Michaelis, R.~Zemel, W.~Brendel, M.~Bethge,
+  F.~A. Wichmann, Shortcut learning in deep neural networks, Nature Machine
+  Intelligence 2~(11) (2020) 665--673.
+\newblock \href {https://doi.org/10.1038/s42256-020-00257-z}
+  {\path{doi:10.1038/s42256-020-00257-z}}.
+
+\bibitem{kapoor2023leakage}
+S.~Kapoor, A.~Narayanan, Leakage and the reproducibility crisis in
+  machine-learning-based science, Patterns 4~(9) (2023) 100804.
+\newblock \href {https://doi.org/10.1016/j.patter.2023.100804}
+  {\path{doi:10.1016/j.patter.2023.100804}}.
+
+\bibitem{lessmeier2016paderborn}
+C.~Lessmeier, J.~K. Kimotho, D.~Zimmer, W.~Sextro, Condition monitoring of
+  bearing damage in electromechanical drive systems by using motor current
+  signals of electric motors: A benchmark data set for data-driven
+  classification, PHM Society European Conference 3~(1) (2016).
+\newblock \href {https://doi.org/10.36001/phme.2016.v3i1.1577}
+  {\path{doi:10.36001/phme.2016.v3i1.1577}}.
+
+\bibitem{hendriks2022benchmark}
+J.~Hendriks, P.~Dumond, D.~A. Knox, Towards better benchmarking using the cwru
+  bearing fault dataset, Mechanical Systems and Signal Processing 169 (2022)
+  108732.
+\newblock \href {https://doi.org/10.1016/j.ymssp.2021.108732}
+  {\path{doi:10.1016/j.ymssp.2021.108732}}.
+
+\bibitem{zech2018variable}
+J.~R. Zech, M.~A. Badgeley, M.~Liu, A.~B. Costa, J.~J. Titano, E.~K. Oermann,
+  Variable generalization performance of a deep learning model to detect
+  pneumonia in chest radiographs: A cross-sectional study, PLOS Medicine
+  15~(11) (2018) e1002683.
+\newblock \href {https://doi.org/10.1371/journal.pmed.1002683}
+  {\path{doi:10.1371/journal.pmed.1002683}}.
+
+\bibitem{henderson2018matters}
+P.~Henderson, R.~Islam, P.~Bachman, J.~Pineau, D.~Precup, D.~Meger, Deep
+  reinforcement learning that matters, Proceedings of the AAAI Conference on
+  Artificial Intelligence 32~(1) (2018).
+\newblock \href {https://doi.org/10.1609/aaai.v32i1.11694}
+  {\path{doi:10.1609/aaai.v32i1.11694}}.
+
+\bibitem{dodge2019showyourwork}
+J.~Dodge, S.~Gururangan, D.~Card, R.~Schwartz, N.~A. Smith, Show your work:
+  Improved reporting of experimental results, in: Proceedings of the 2019
+  Conference on Empirical Methods in Natural Language Processing and the 9th
+  International Joint Conference on Natural Language Processing (EMNLP-IJCNLP),
+  2019, pp. 2185--2194.
+\newblock \href {https://doi.org/10.18653/v1/D19-1224}
+  {\path{doi:10.18653/v1/D19-1224}}.
+
+\end{thebibliography}

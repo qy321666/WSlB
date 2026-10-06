@@ -1,0 +1,2 @@
+method,src_load,tgt_load,k,seed,acc,macro_f1,recall
+source_only,0,3,10,2,0.5953,0.6711,0.000;1.000;1.000;0.000;1.000;0.734;1.000;1.000;1.000;1.000

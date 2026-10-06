@@ -1,0 +1,17 @@
+源 load0(fr=29.95Hz) -> 目标 load3(fr=28.83Hz)   支撑 50  测试 1233  k=5  每类 400 条  40 epoch  10 seed
+
+指纹估计质量: k=5 个支撑样本 vs 全区  ->  平均余弦 0.995  最差 0.989
+**源域指纹 vs 目标域全区指纹**           ->  平均余弦 0.924  最差 0.852
+   (逐类: NORMAL=0.899  B007=0.966  B014=0.923  B021=0.852  IR007=0.895  IR014=0.916  IR021=0.918  OR007=0.963  OR014=0.939  OR021=0.971)
+
+合成源                                                →真实目标域 macro_f1          判别器可分性
+------------------------------------------------------------------------------------
+Physics twin (source speed)                     0.1251 ± 0.0298        0.9999
+Source fingerprint + white noise                0.5843 ± 0.0470        0.9977
+Source fingerprint + impulse train              0.4927 ± 0.0397        0.9994
+Target fingerprint + white noise                0.8935 ± 0.0810        0.9358
+Target fingerprint + impulse train              0.6504 ± 0.0563        0.9786
+Target fingerprint + impulse (comb-free)        0.5241 ± 0.0605        0.9999
+
+(10 类随机水平 macro_f1=0.10;判别器 0.5=完全分不开, 1.0=一眼分开)
+[save] D:\.1papernew\论文一_代码_v1\paper1_code\results_paper\tab_synth.json
