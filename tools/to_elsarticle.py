@@ -47,7 +47,7 @@ FRONT = r"""% !TEX program = xelatex
 
 \begin{frontmatter}
 
-\title{Why Simulation-Based Sample Supplementation Fails in Cross-Domain Bearing
+\title{When Simulation-Based Sample Supplementation Fails in Cross-Domain Bearing
 Fault Diagnosis: The Recording-Fingerprint Effect and an Evaluation Protocol
 That Reveals It}
 

@@ -1,4 +1,4 @@
-# Why Simulation-Based Sample Supplementation Fails in Cross-Domain Bearing Fault Diagnosis
+# When Simulation-Based Sample Supplementation Fails in Cross-Domain Bearing Fault Diagnosis
 
 **The Recording-Fingerprint Effect and an Evaluation Protocol That Reveals It**
 Fangyu Zhang, Julong He
