@@ -317,14 +317,24 @@ def table_pb_levels():
         return
     d = json.load(open(path, encoding="utf-8"))
     m, s = d["mean"], d["std"]
-    chk("表V", "同录制 (L1) 均值", m["L1"], 0.938)
-    chk("表V", "轴承不相交 (L3) 均值", m["L3"], 0.597)
-    chk("表V", "乐观量 +L1-L3", m["L1"] - m["L3"], 0.340)
-    chk("表V", "同录制 std", s["L1"], 0.013)
-    chk("表V", "轴承不相交 std", s["L3"], 0.139)
-    chk("表VI", "L2 跨录制同轴承", m["L2"], 0.755)
-    chk("表VI", "会话项 L1-L2", m["L1"] - m["L2"], 0.182)
-    chk("表VI", "试件项 L2-L3", m["L2"] - m["L3"], 0.158)
+    chk("表V", "同录制 (L1) 均值", m["L1"], 0.891)
+    chk("表V", "轴承不相交 (L3) 均值", m["L3"], 0.505)
+    chk("表V", "乐观量 +L1-L3", m["L1"] - m["L3"], 0.386)
+    chk("表V", "同录制 std", s["L1"], 0.120)
+    chk("表V", "轴承不相交 std", s["L3"], 0.161)
+    chk("表VI", "L2 跨录制同轴承", m["L2"], 0.730)
+    chk("表VI", "会话项 L1-L2", m["L1"] - m["L2"], 0.161)
+    chk("表VI", "试件项 L2-L3", m["L2"] - m["L3"], 0.225)
+    # 正文/disclose:第 6 个 seed 训练未收敛,重跑同一配置收敛
+    chk("表V", "未收敛 run 的训练集 F1", d["per_seed"]["fit"][6], 0.597, tol=0.01)
+    rp = os.path.join(HERE, "results_pb", "pb_levels_s6rerun.json")
+    if os.path.exists(rp):
+        r = json.load(open(rp, encoding="utf-8"))["mean"]
+        chk("表V", "重跑同配置的训练集 F1", r["fit"], 1.000, tol=0.005)
+        chk("表V", "重跑同配置的 L1", r["L1"], 0.927)
+    # 正文:剔除该 run 后 L1 由 0.891 升到 0.931
+    l1 = [v for i, v in enumerate(d["per_seed"]["L1"]) if i != 6]
+    chk("表V", "剔除未收敛 run 的 L1", float(np.mean(l1)), 0.931)
 
 
 # --------------------------------- 表 VI 后两列 / 6.x 小节：去台架线后重训
@@ -343,12 +353,12 @@ def table_pb_filter():
         return
     base = json.load(open(base_p, encoding="utf-8"))
     ref = {  # (L1, L2, L3, 去能量比)
-        "notch": (0.903, 0.766, 0.607, 0.933),
-        "highpass": (0.914, 0.773, 0.589, 0.997),
+        "notch": (0.899, 0.772, 0.577, 0.933),
+        "highpass": (0.908, 0.776, 0.550, 0.997),
     }
-    sess_ref = {"notch": 0.137, "highpass": 0.141}
-    spec_ref = {"notch": 0.160, "highpass": 0.184}
-    tot_ref = {"notch": 0.297, "highpass": 0.324}
+    sess_ref = {"notch": 0.127, "highpass": 0.132}
+    spec_ref = {"notch": 0.195, "highpass": 0.226}
+    tot_ref = {"notch": 0.321, "highpass": 0.358}
     for k, p in paths.items():
         d = json.load(open(p, encoding="utf-8"))
         m = d["mean"]
@@ -360,14 +370,24 @@ def table_pb_filter():
         chk("表VI", f"{k} 会话项", m["L1"] - m["L2"], sess_ref[k])
         chk("表VI", f"{k} 试件项", m["L2"] - m["L3"], spec_ref[k])
         chk("表VI", f"{k} 总乐观量", m["L1"] - m["L3"], tot_ref[k])
-    # 正文:notch 相对未滤波的配对下降 0.045 ± 0.008,且 5 个 seed 全部为负
-    a, b = base["per_seed"], json.load(open(paths["notch"], encoding="utf-8"))["per_seed"]
-    s0 = np.array(a["L1"]) - np.array(a["L2"])
-    s1 = np.array(b["L1"]) - np.array(b["L2"])
-    diff = s0 - s1
-    chk("表VI", "配对下降均值", float(diff.mean()), 0.045)
-    chk("表VI", "配对下降标准误", float(diff.std(ddof=1) / np.sqrt(len(diff))), 0.008, tol=0.001)
-    chk("表VI", "会话项下降的 seed 数", float((diff > 0).sum()), 5.0, tol=0.001)
+    # 正文:配对下降(会话项),notch 0.034±0.012、highpass 0.028±0.011;两者都是 9/10 个 seed
+    pairs = {"notch": (0.034, 0.012), "highpass": (0.028, 0.011)}
+    for k, (dm, se) in pairs.items():
+        b = json.load(open(paths[k], encoding="utf-8"))["per_seed"]
+        s0 = np.array(base["per_seed"]["L1"]) - np.array(base["per_seed"]["L2"])
+        s1 = np.array(b["L1"]) - np.array(b["L2"])
+        diff = s0 - s1
+        chk("表VI", f"{k} 会话项配对下降", float(diff.mean()), dm)
+        chk("表VI", f"{k} 配对下降标准误", float(diff.std(ddof=1) / np.sqrt(len(diff))), se, tol=0.001)
+        chk("表VI", f"{k} 会话项下降的 seed 数", float((diff > 0).sum()), 9.0, tol=0.001)
+    # 正文:试件项的变化(滤波后减未滤波)两种滤波方向不一致:-0.030 与 +0.001
+    for k, dm, se in (("notch", -0.030, 0.018), ("highpass", 0.001, 0.023)):
+        b = json.load(open(paths[k], encoding="utf-8"))["per_seed"]
+        s0 = np.array(base["per_seed"]["L2"]) - np.array(base["per_seed"]["L3"])
+        s1 = np.array(b["L2"]) - np.array(b["L3"])
+        diff = s1 - s0
+        chk("表VI", f"{k} 试件项变化", float(diff.mean()), dm)
+        chk("表VI", f"{k} 试件项配对标准误", float(diff.std(ddof=1) / np.sqrt(len(diff))), se, tol=0.001)
 
 
 # ------------------------------------------------------- 表 III：CWRU 同录制泄漏

@@ -73,8 +73,8 @@ the target envelope is the most robust augmentation when the target recording
 is atypical; adding a physical impulse train degrades fidelity and
 accuracy. On Paderborn, where several bearings share each class, class-mean
 spectra remain indistinguishable (cosine $1.000$) although classes are defined
-by damage location; there same-recording optimism of $+0.340$ splits
-into session ($+0.182$) and specimen ($+0.158$) terms. The advantage of
+by damage location; there same-recording optimism of $+0.386$ splits
+into session ($+0.161$) and specimen ($+0.225$) terms. The advantage of
 fingerprint calibration over raw physics inverts between the benchmarks.
 \end{abstract}
 
@@ -156,10 +156,11 @@ inner-ring and outer-ring bearings are identical (cosine $1.000$; CWRU:
 $0.626$), and remain so after the dominant rig tone is filtered out (margin
 $+0.003$). The CWRU class separation is therefore a property of the individual
 specimens, not of the classes. Same-recording evaluation is optimistic by
-$+0.340$ macro-F1 there; because each Paderborn bearing was measured $20$
+$+0.386$ macro-F1 there; because each Paderborn bearing was measured $20$
 times, that optimism can be split by re-evaluating on a different
-\emph{recording of the same bearings}, which gives $+0.182$ for the session
-and a further $+0.158$ for the change of specimen. A twin whose physics
+\emph{recording of the same bearings}, which gives $+0.161$ for the session
+and a further $+0.225$ for the change of specimen, and it survives removal of
+the rig tone that holds $93\%$ of the spectral energy ($+0.321$ remains). A twin whose physics
 exactly matches the class definition is still the worst augmentation tried. The
 advantage of fingerprint calibration over raw physics inverts between CWRU and
 Paderborn in the direction the mechanism predicts, which serves as a positive
@@ -636,8 +637,10 @@ Table~\ref{tab:pb_levels}, and are taken from that same run.
 \centering
 \caption{Same-recording versus bearing-disjoint evaluation on Paderborn
 (condition N15\_M07\_F10, three classes, 5 training bearings per class, 200
-epochs, five seeds, macro-F1). The training set is files 1--4 of the training
-bearings; the same-recording test set is its held-out $30\%$ of windows.}
+epochs, ten seeds, macro-F1). The training set is files 1--4 of the training
+bearings; the same-recording test set is its held-out $30\%$ of windows. All
+ten runs are included, including the one that did not converge (see the text
+below).}
 \label{tab:pb_leak}
 \small
 \resizebox{\columnwidth}{!}{%
@@ -645,8 +648,8 @@ bearings; the same-recording test set is its held-out $30\%$ of windows.}
 \toprule
  & Same recording & Bearing-disjoint & Optimism \\
 \midrule
-Mean over 5 seeds & $0.938$ & $0.597$ & $+0.340$ \\
-Std. deviation    & $0.013$ & $0.139$ & \\
+Mean over 10 seeds & $0.891$ & $0.505$ & $+0.386$ \\
+Std. deviation     & $0.120$ & $0.161$ & \\
 \midrule
 \multicolumn{4}{l}{\emph{CWRU, for comparison} (mean over four support loads)} \\
 Support only      & $0.993$ & $0.834$ & $+0.159$ \\
@@ -655,14 +658,26 @@ Support only      & $0.993$ & $0.834$ & $+0.159$ \\
 }
 \end{table}
 
-The optimism is $+0.340$, well above the CWRU average and above CWRU's worst
+The optimism is $+0.386$, well above the CWRU average and above CWRU's worst
 case. Same-recording evaluation is not a quirk of one benchmark; it is a
 consequence of drawing support and test windows from one recording, and it
 reproduces wherever a benchmark is organized as a small number of long
 recordings. We also note that under a bearing-disjoint protocol the features do
-retain \emph{some} transferable signal ($0.597$ against $0.333$ chance) --- the
+retain \emph{some} transferable signal ($0.505$ against $0.333$ chance) --- the
 point is not that the task is unlearnable, but that more than half of the
 apparent performance is leakage.
+
+The spread is larger here than on CWRU, and one of the ten runs deserves a
+comment. Seed~6 failed to converge: its macro-F1 on the \emph{training} set is
+$0.60$ where the other nine reach $0.98$--$1.00$, and all three of its test
+scores are correspondingly low. Re-running the identical configuration
+converged ($1.00$ on the training set, $L1 = 0.927$), so this is a transient
+optimization failure rather than a property of the split. We report it in the
+table instead of replacing it, because the contrast we measure is
+\emph{within} a run --- the same model evaluated on three test sets --- and that
+run's optimism, $+0.12$, is within the range of the other nine
+($+0.13$ to $+0.66$). Discarding it would have raised the same-recording mean
+from $0.891$ to $0.931$.
 
 \subsection{The optimism decomposes into a session term and a specimen term}
 
@@ -695,34 +710,34 @@ control of Table~\ref{tab:bench}.}
  & No filter & Notch & High-pass \\
 \midrule
 Spectral energy removed        & ---      & $93.3\%$ & $99.7\%$ \\
-L1 same file, held-out windows & $0.938$  & $0.903$  & $0.914$ \\
-L2 files 5--8, same bearings   & $0.755$  & $0.766$  & $0.773$ \\
-L3 held-out bearings           & $0.597$  & $0.607$  & $0.589$ \\
+L1 same file, held-out windows & $0.891$  & $0.899$  & $0.908$ \\
+L2 files 5--8, same bearings   & $0.730$  & $0.772$  & $0.776$ \\
+L3 held-out bearings           & $0.505$  & $0.577$  & $0.550$ \\
 \midrule
-Session term (L1$-$L2)         & $+0.182$ & $+0.137$ & $+0.141$ \\
-Specimen term (L2$-$L3)        & $+0.158$ & $+0.160$ & $+0.184$ \\
-Total optimism (L1$-$L3)       & $+0.340$ & $+0.297$ & $+0.324$ \\
+Session term (L1$-$L2)         & $+0.161$ & $+0.127$ & $+0.132$ \\
+Specimen term (L2$-$L3)        & $+0.225$ & $+0.195$ & $+0.226$ \\
+Total optimism (L1$-$L3)       & $+0.386$ & $+0.321$ & $+0.358$ \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-The result is unambiguous and it splits the effect in two roughly equal parts.
-Simply re-measuring the \emph{same} bearings costs $+0.182$ macro-F1: that much
+The result is unambiguous, and the specimen term is the larger of the two.
+Simply re-measuring the \emph{same} bearings costs $+0.161$ macro-F1: that much
 of the optimism is pure session leakage, with the specimen held fixed. Changing
-the specimen on top of that costs a further $+0.158$. Both terms are of the
-same order, so the two explanations that the CWRU protocol cannot distinguish
---- ``the model keys on the recording'' and ``the model keys on the individual
-bearing'' --- are in fact each about half right.
+the specimen on top of that costs a further $+0.225$. The two explanations that
+the CWRU protocol cannot distinguish --- ``the model keys on the recording'' and
+``the model keys on the individual bearing'' --- are therefore both real, with
+the specimen carrying the larger share.
 
 Two qualifications belong here. First, the specimen term is far more variable
-than the session term: dropping it has a standard deviation of $0.139$ against
-$0.032$ for the session drop, and one of five seeds (seed~3, $L3 = 0.82$) even
+than the session term: dropping it has a standard deviation of $0.209$ against
+$0.046$ for the session drop, and one of ten seeds (seed~3, $L3 = 0.77$) even
 reverses the sign. Which bearing is held out matters more than which session it
 was measured in, which is what one expects if the specimen term is carried by
-that bearing's individual spectral signature. Second, $L3 = 0.597$ is above
-chance, so cross-specimen transfer is not zero; it is roughly the level the
-classes would reach from the fault \emph{physics} alone.
+that bearing's individual spectral signature. Second, $L3 = 0.505$ is well above
+chance, so cross-specimen transfer is not zero: part of the fault physics does
+survive the change of specimen.
 
 \subsection{The decomposition is not carried by the rig tone}
 \label{sec:pb_filter}
@@ -739,20 +754,21 @@ Table~\ref{tab:bench}, which discards $99.7\%$.
 
 Both filters leave the conclusion of the section standing
 (Table~\ref{tab:pb_levels}). Same-recording evaluation moves little --- L1 is
-$0.903$ and $0.914$ against $0.938$ unfiltered --- although more than nine
-tenths of the energy is gone. Total optimism is $+0.297$ and $+0.324$ against
-$+0.340$, and it decomposes in the same proportion: the specimen term is
-$+0.160$ and $+0.184$ against $+0.158$, i.e.\ unchanged within the seed spread,
-while the session term falls to $+0.137$ and $+0.141$ from $+0.182$. That
-reduction is systematic rather than a difference of means: compared seed by
-seed with the unfiltered run, the notch lowers the session term by
-$0.045 \pm 0.008$ standard error, and it is lower in all five seeds. About a
-quarter of the session leakage is therefore carried by the dominant line, and
-the other three quarters by the rest of the spectrum --- the bearing resonances
-and their sidebands, which is where the fault signature itself lies.
+$0.899$ and $0.908$ against $0.891$ unfiltered --- although more than nine
+tenths of the energy is gone. Total optimism is $+0.321$ and $+0.358$ against
+$+0.386$. The session term is the one that moves consistently: it falls to
+$+0.127$ and $+0.132$ from $+0.161$, a paired reduction of $0.034 \pm 0.012$
+and $0.028 \pm 0.011$ standard error, and it is lower in nine of the ten seeds
+under each filter --- the exception is the run of the previous subsection that
+did not converge. The specimen term moves by $-0.030 \pm 0.018$ under the notch
+and by $+0.001 \pm 0.023$ under the high-pass, i.e.\ in no direction that the
+two filters agree on, so we read it as unchanged. Roughly a fifth of the session
+leakage is therefore carried by the dominant line; the rest of it, and the
+whole of the specimen term, lie in the remainder of the spectrum --- the bearing
+resonances and their sidebands, which is where the fault signature itself is.
 
 That discarding more than $99\%$ of the signal energy still leaves a
-same-recording optimism of $0.29$--$0.32$ is the decisive form of this control:
+same-recording optimism of $0.32$--$0.36$ is the decisive form of this control:
 the effect is not an artefact of one conspicuous spectral line, and a protocol
 that guards against it cannot be defeated by notch-filtering the input.
 
@@ -1073,10 +1089,11 @@ magnitude spectra of healthy, inner-ring and outer-ring bearings are
 indistinguishable (margin $+0.003$ after the rig tone is filtered out, against
 $0.626$ on CWRU), so CWRU's class separation is a property of individual
 specimens rather than of the classes; same-recording evaluation remains
-optimistic, by $+0.340$, of which $+0.182$ is attributable to the recording
-session alone and $+0.158$ to the change of specimen --- and removing the rig
-tone, which holds $93\%$ of the spectral energy, leaves $+0.297$ with the same
-split, so the optimism is not an artefact of that line; and the physical component
+optimistic, by $+0.386$, of which $+0.161$ is attributable to the recording
+session alone and $+0.225$ to the change of specimen --- and removing the rig
+tone, which holds $93\%$ of the spectral energy, leaves $+0.321$, still
+dominated by the specimen term, so the optimism is not an artefact of that
+line; and the physical component
 of the twin becomes useful
 for the first time once its impulse train is layered on the target envelope, in
 the one setting where the labels rather than the fingerprints carry the physics
@@ -1105,7 +1122,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.1})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.2})
 and are also provided as supplementary material to this
 submission.
 

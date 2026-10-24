@@ -19,8 +19,9 @@ L1→L2 的落差只来自"换录制",L2→L3 只来自"换试件"。这正是�
 
 设计上刻意复现 tab:pb_leak 的两个端点(L1/L3 的训练集与测试集与那一致),
 所以这两个数应当就是表 V 的两个端点 —— 顺便当一次自洽性检查。
-现正文表 V 的端点是 L1 = 0.938、L3 = 0.597(见 results_pb/pb_levels.json 的 mean,
-5 seed)。**注:本注释原先记的 0.885 / 0.611 是更早一轮的值**,已被现设置取代,勿再引用 ——
+现正文表 V 的端点是 L1 = 0.891、L3 = 0.505(见 results_pb/pb_levels.json 的 mean,
+10 seed;其中 seed 6 训练未收敛、未剔除,重跑见 pb_levels_s6rerun.json)。
+**注:本注释先后记过 0.885/0.611 与 0.938/0.597,都是更早的 5 seed 轮次,勿再引用** ——
 `tools/verify_paper_numbers.py` 是按现处的 mean 核对的。
 
 台架线稳健性检验(2026-10-24 补):Paderborn 的 100 Hz 谱线是 1500 rpm 下的
@@ -119,22 +120,24 @@ def balanced_split(lab, codes, rng, n_per_class=TRAIN_BEARINGS):
 
 
 def parse_args(argv):
-    """位置参数 [epochs] [seeds] + 可选 --filter/--f0/--bins/--harm/--cutoff。"""
+    """位置参数 [epochs] [seeds] + 可选 --filter/--f0/--bins/--harm/--cutoff/--suffix。"""
     pos = [a for a in argv[1:] if not a.startswith("--")]
-    opt = {"filter": "none", "f0": 100.0, "bins": 2, "harm": 20, "cutoff": 2000.0}
+    opt = {"filter": "none", "f0": 100.0, "bins": 2, "harm": 20, "cutoff": 2000.0,
+           "suffix": "", "seed_start": 0.0}
     for a in argv[1:]:
         if "=" in a and a.startswith("--"):
             k, v = a[2:].split("=", 1)
-            opt[k] = v if k == "filter" else float(v)
+            opt[k] = v if k in ("filter", "suffix") else float(v)
     epochs = int(pos[0]) if len(pos) > 0 else 200
     n_seed = int(pos[1]) if len(pos) > 1 else 5
     return epochs, n_seed, opt
 
 
-def out_name(kind):
+def out_name(kind, suffix=""):
     """滤波条件各自写一个文件;none 仍写 pb_levels.json(表 V 的现成产物)。"""
-    return {"none": "pb_levels.json", "notch": "pb_levels_notch.json",
-            "highpass": "pb_levels_highpass.json"}[kind]
+    stem = {"none": "pb_levels", "notch": "pb_levels_notch",
+            "highpass": "pb_levels_highpass"}[kind]
+    return stem + ("_" + suffix if suffix else "") + ".json"
 
 
 def main():
@@ -163,7 +166,8 @@ def main():
     print(hdr)
     print("  " + "-" * (len(hdr) - 2))
     rec = {"L1": [], "L2": [], "L3": [], "fit": []}
-    for seed in range(n_seed):
+    seed0 = int(opt["seed_start"])
+    for seed in range(seed0, seed0 + n_seed):
         rng = np.random.RandomState(seed)
         tr_c, te_c = balanced_split(lab, codes, rng)
         tr_b = np.isin(br, tr_c)
@@ -195,7 +199,7 @@ def main():
           f"(会话泄漏 {mu['L1'] - mu['L2']:+.4f} + 试件差异 {mu['L2'] - mu['L3']:+.4f})")
 
     os.makedirs(RES, exist_ok=True)
-    fn = os.path.join(RES, out_name(opt["filter"]))
+    fn = os.path.join(RES, out_name(opt["filter"], opt["suffix"]))
     json.dump({"cond": cond, "epochs": epochs, "seeds": n_seed,
                "per_seed": rec, "mean": mu, "std": sd,
                "n_fit_files": N_FIT, "n_held_files": N_HELD,
