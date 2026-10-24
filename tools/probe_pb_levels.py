@@ -23,7 +23,17 @@ L1→L2 的落差只来自"换录制",L2→L3 只来自"换试件"。这正是�
 5 seed)。**注:本注释原先记的 0.885 / 0.611 是更早一轮的值**,已被现设置取代,勿再引用 ——
 `tools/verify_paper_numbers.py` 是按现处的 mean 核对的。
 
-用法: python tools/probe_pb_levels.py [epochs] [seeds]
+台架线稳健性检验(2026-10-24 补):Paderborn 的 100 Hz 谱线是 1500 rpm 下的
+4 倍轴频,是试验台的电机线,与故障无关。正文表 IV 的高通对照只改了**谱统计**,
+没有重训分类器;这里在同一套 L1/L2/L3 分解上**重训**,看乐观量是否由这条线携带。
+
+    --filter=none      原设置(写 pb_levels.json,勿覆盖的表 V 产物)
+    --filter=notch     去掉 100 Hz 的 1..20 次谐波,每次 ±2 个频点
+    --filter=highpass  去掉 2 kHz 以下(与表 IV 的对照同一截止)
+
+用法: python tools/probe_pb_levels.py [epochs] [seeds] [--filter=notch]
+                                      [--f0=100] [--bins=2] [--harm=20]
+                                      [--cutoff=2000]
 """
 import json
 import os
@@ -34,7 +44,7 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pb_utils import (CLASSES_LOC, OP_CONDITIONS, build_pb_domain,  # noqa: E402
+from pb_utils import (CLASSES_LOC, OP_CONDITIONS, SR, build_pb_domain,  # noqa: E402
                       class_of_location, damage_table, list_bearings)
 from train import evaluate  # noqa: E402
 
@@ -47,6 +57,41 @@ STRIDE = 2048
 N_FIT = 4         # 训练用文件:序号 1..4  —— 与 tab:pb_leak 一致
 N_HELD = 4        # 跨录制测试文件:序号 5..8
 TRAIN_BEARINGS = 5
+
+
+def spectral_keep(n, fs, kind, f0=100.0, n_bins=2, n_harm=20, cutoff=2000.0):
+    """返回长度 n//2+1 的布尔掩码,True 表示该频点保留。
+
+    notch   : 去掉 f0 的 1..n_harm 次谐波,每次 ±n_bins 个频点
+              (100 Hz 的谱线落在 93.75 Hz 的栅栏里,两侧各有泄漏,故要按频点宽度去)
+    highpass: 去掉 cutoff 以下的全部频点 —— 与表 IV 的 2 kHz 高通对照完全一致
+    """
+    freqs = np.fft.rfftfreq(n, d=1.0 / fs)
+    keep = np.ones(len(freqs), dtype=bool)
+    if kind == "highpass":
+        keep &= freqs >= cutoff
+    elif kind == "notch":
+        df = fs / n
+        for k in range(1, n_harm + 1):
+            fk = k * f0
+            if fk > fs / 2:
+                break
+            keep &= np.abs(freqs - fk) > n_bins * df
+    return keep
+
+
+def apply_filter(X, kind, fs, **kw):
+    """逐窗做频域掩码,再重新 z-score。返回 (滤波后的窗, 被去掉的谱能量占比)。"""
+    if kind == "none":
+        return X, 0.0
+    keep = spectral_keep(X.shape[1], fs, kind, **kw)
+    Z = np.fft.rfft(X.astype(np.float64), axis=1)
+    e_all = float(np.sum(np.abs(Z) ** 2))
+    Z = Z * keep[None, :]
+    Y = np.fft.irfft(Z, n=X.shape[1], axis=1)
+    Y = (Y - Y.mean(axis=1, keepdims=True)) / (Y.std(axis=1, keepdims=True) + 1e-12)
+    removed = 1.0 - float(np.sum(np.abs(Z) ** 2)) / max(e_all, 1e-12)
+    return Y.astype(np.float32), removed
 
 
 def load_all(root, cond, max_files=N_FIT + N_HELD):
@@ -73,17 +118,41 @@ def balanced_split(lab, codes, rng, n_per_class=TRAIN_BEARINGS):
     return tr, te
 
 
+def parse_args(argv):
+    """位置参数 [epochs] [seeds] + 可选 --filter/--f0/--bins/--harm/--cutoff。"""
+    pos = [a for a in argv[1:] if not a.startswith("--")]
+    opt = {"filter": "none", "f0": 100.0, "bins": 2, "harm": 20, "cutoff": 2000.0}
+    for a in argv[1:]:
+        if "=" in a and a.startswith("--"):
+            k, v = a[2:].split("=", 1)
+            opt[k] = v if k == "filter" else float(v)
+    epochs = int(pos[0]) if len(pos) > 0 else 200
+    n_seed = int(pos[1]) if len(pos) > 1 else 5
+    return epochs, n_seed, opt
+
+
+def out_name(kind):
+    """滤波条件各自写一个文件;none 仍写 pb_levels.json(表 V 的现成产物)。"""
+    return {"none": "pb_levels.json", "notch": "pb_levels_notch.json",
+            "highpass": "pb_levels_highpass.json"}[kind]
+
+
 def main():
-    epochs = int(sys.argv[1]) if len(sys.argv) > 1 else 200
-    n_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 5
+    epochs, n_seed, opt = parse_args(sys.argv)
     from probe_paderborn import train_clf  # 复用同一训练循环
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     cond = OP_CONDITIONS[3]
     X, y, br, num, lab = load_all(ROOT, cond)
+    X, removed = apply_filter(X, opt["filter"], SR, f0=opt["f0"],
+                              n_bins=int(opt["bins"]), n_harm=int(opt["harm"]),
+                              cutoff=opt["cutoff"])
     codes = [b for b in list_bearings(ROOT) if lab(b)]
     print(f"[三层泄漏分解] {cond}  {len(X)} 窗(窗长 {WINDOW},步长 {STRIDE})  "
           f"{epochs} epoch  {n_seed} seed  device={device.type}")
+    print(f"  滤波        : {opt['filter']}  (去掉谱能量 {removed * 100:.1f}%;"
+          f" f0={opt['f0']} Hz, ±{int(opt['bins'])} 频点 ×{int(opt['harm'])} 次谐波,"
+          f" highpass 截止 {opt['cutoff']} Hz)")
     print(f"  L1 同录制   : 文件 1..{N_FIT} 的末 30% 窗")
     print(f"  L2 跨录制   : 文件 {N_FIT + 1}..{N_FIT + N_HELD},同一批训练轴承、同一工况")
     print(f"  L3 跨试件   : 留出轴承的全部文件")
@@ -126,11 +195,14 @@ def main():
           f"(会话泄漏 {mu['L1'] - mu['L2']:+.4f} + 试件差异 {mu['L2'] - mu['L3']:+.4f})")
 
     os.makedirs(RES, exist_ok=True)
+    fn = os.path.join(RES, out_name(opt["filter"]))
     json.dump({"cond": cond, "epochs": epochs, "seeds": n_seed,
                "per_seed": rec, "mean": mu, "std": sd,
-               "n_fit_files": N_FIT, "n_held_files": N_HELD},
-              open(os.path.join(RES, "pb_levels.json"), "w"), indent=1)
-    print(f"  -> {os.path.join(RES, 'pb_levels.json')}")
+               "n_fit_files": N_FIT, "n_held_files": N_HELD,
+               "filter": opt["filter"], "filter_spec": dict(opt),
+               "spectral_energy_removed": removed},
+              open(fn, "w"), indent=1)
+    print(f"  -> {fn}")
 
 
 if __name__ == "__main__":

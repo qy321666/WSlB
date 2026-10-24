@@ -327,6 +327,49 @@ def table_pb_levels():
     chk("表VI", "试件项 L2-L3", m["L2"] - m["L3"], 0.158)
 
 
+# --------------------------------- 表 VI 后两列 / 6.x 小节：去台架线后重训
+def table_pb_filter():
+    """加滤波后重训的三层分解:results_pb/pb_levels_{notch,highpass}.json。
+
+    正文 6.x 节声称两件事:(1) 滤波后乐观量仍大、分解比例不变;
+    (2) 会话项的五 seed 配对下降为 0.045 ± 0.008(标准误)。
+    """
+    print("\n表 VI 滤波列 / sec:pb_filter  —— pb_levels_{notch,highpass}.json")
+    base_p = os.path.join(HERE, "results_pb", "pb_levels.json")
+    paths = {k: os.path.join(HERE, "results_pb", f"pb_levels_{k}.json")
+             for k in ("notch", "highpass")}
+    if not os.path.exists(base_p) or not all(os.path.exists(p) for p in paths.values()):
+        chk("表VI", "落盘文件", np.nan, 0.0)
+        return
+    base = json.load(open(base_p, encoding="utf-8"))
+    ref = {  # (L1, L2, L3, 去能量比)
+        "notch": (0.903, 0.766, 0.607, 0.933),
+        "highpass": (0.914, 0.773, 0.589, 0.997),
+    }
+    sess_ref = {"notch": 0.137, "highpass": 0.141}
+    spec_ref = {"notch": 0.160, "highpass": 0.184}
+    tot_ref = {"notch": 0.297, "highpass": 0.324}
+    for k, p in paths.items():
+        d = json.load(open(p, encoding="utf-8"))
+        m = d["mean"]
+        l1, l2, l3, er = ref[k]
+        chk("表VI", f"{k} 去能量比", d["spectral_energy_removed"], er)
+        chk("表VI", f"{k} L1", m["L1"], l1)
+        chk("表VI", f"{k} L2", m["L2"], l2)
+        chk("表VI", f"{k} L3", m["L3"], l3)
+        chk("表VI", f"{k} 会话项", m["L1"] - m["L2"], sess_ref[k])
+        chk("表VI", f"{k} 试件项", m["L2"] - m["L3"], spec_ref[k])
+        chk("表VI", f"{k} 总乐观量", m["L1"] - m["L3"], tot_ref[k])
+    # 正文:notch 相对未滤波的配对下降 0.045 ± 0.008,且 5 个 seed 全部为负
+    a, b = base["per_seed"], json.load(open(paths["notch"], encoding="utf-8"))["per_seed"]
+    s0 = np.array(a["L1"]) - np.array(a["L2"])
+    s1 = np.array(b["L1"]) - np.array(b["L2"])
+    diff = s0 - s1
+    chk("表VI", "配对下降均值", float(diff.mean()), 0.045)
+    chk("表VI", "配对下降标准误", float(diff.std(ddof=1) / np.sqrt(len(diff))), 0.008, tol=0.001)
+    chk("表VI", "会话项下降的 seed 数", float((diff > 0).sum()), 5.0, tol=0.001)
+
+
 # ------------------------------------------------------- 表 III：CWRU 同录制泄漏
 def table_leak():
     """表 III 由 tools/probe_leakage.py 产出 results_paper/tab_leak.json。"""
@@ -448,11 +491,12 @@ def main():
     runs = {"bench": table_bench, "classsep": table_classsep, "diag2": diag2,
             "rig": rig_tone, "pb_fewshot": table_pb_fewshot, "main": table_main,
             "pb_levels": table_pb_levels, "leak": table_leak, "fewshot": table_fewshot,
-            "synth": table_synth}
+            "synth": table_synth, "pb_filter": table_pb_filter}
     # 两组划分的依据是**数据依赖**,不是主题:artifacts 组只读本仓已落盘的 JSON/CSV,
     # 没有原始数据也能跑 —— 补充材料包就是靠这一点做到"审稿人开箱可复核"。
     groups = {"all": tuple(runs),
-              "artifacts": ("synth", "leak", "fewshot", "main", "pb_levels", "pb_fewshot"),
+              "artifacts": ("synth", "leak", "fewshot", "main", "pb_levels",
+                            "pb_filter", "pb_fewshot"),
               "raw": ("bench", "classsep", "diag2", "rig")}
     todo = groups.get(which, tuple(which.split(",")))
     for k in todo:

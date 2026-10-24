@@ -22,7 +22,7 @@ python tools/verify_paper_numbers.py artifacts
 
 Reads every artifact in `results_paper/`, `results_pb/` and `results/final/`, recomputes the
 quantity each table reports, compares it with the value printed in the manuscript, and prints
-one line per check. **170 checks**; exit code 0 means all agree, exit code 1 means a mismatch
+one line per check. **187 checks**; exit code 0 means all agree, exit code 1 means a mismatch
 and the offending rows are printed.
 
 Requirements: Python 3 with numpy and scipy (`requirements.txt`).
@@ -31,7 +31,7 @@ Requirements: Python 3 with numpy and scipy (`requirements.txt`).
 
 ```bash
 python tools/verify_paper_numbers.py raw     # 35 further checks
-python tools/verify_paper_numbers.py all     # all 205
+python tools/verify_paper_numbers.py all     # all 222
 ```
 
 `raw` recomputes the deterministic statistics of Table 2, Table 4, the "Diagnosis II" section
@@ -79,7 +79,7 @@ Two different kinds of claim; they should not be conflated.
 | | how it is verified | checks |
 |---|---|---|
 | Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 35 |
-| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 170 |
+| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 187 |
 
 For the second group the check establishes **manuscript ↔ artifact** agreement, not
 **artifact ↔ fresh run**. Those tables come from training, and this hardware is not run-to-run
@@ -101,7 +101,7 @@ Every numbered table has an on-disk artifact and a computing function in
 | Table 3 `tab:leak` | `results_paper/tab_leak.json` (n_repeat=2 × 3 seeds) | `python tools/probe_leakage.py all 60 3 5 2` | `table_leak` |
 | Table 4 `tab:bench` | `results_pb/spectra_bench.json` (recomputed anyway) | `python tools/probe_spectra.py` | `table_bench` (raw) |
 | Table 5 `tab:pb_leak` | `results_pb/pb_levels.json` (5 seeds, 200 epochs) | `python tools/probe_pb_levels.py 200 5` | `table_pb_levels` |
-| Table 6 `tab:pb_levels` | same file (same run) | same | `table_pb_levels` |
+| Table 6 `tab:pb_levels` | `results_pb/pb_levels.json`, plus `results_pb/pb_levels_notch.json` and `pb_levels_highpass.json` for the two filtered columns (`pb_levels.log`, `pb_levels_notch.log`, `pb_levels_highpass.log`) | `python tools/probe_pb_levels.py 200 5`; add `--filter=notch` and `--filter=highpass` for the last two columns | `table_pb_levels`, `table_pb_filter` |
 | Table 7 `tab:pb_fewshot` | `results_pb/d_twin_k5.json`, `d_twin_k20.json`, `d_twin_k50.json` | `python tools/probe_paderborn.py d` | `table_pb_fewshot` |
 | Table 8 `tab:main` | `results/final/*.csv` (7 methods × 5 seeds) | `bash run_s2.sh all` then `python tools/collect_results.py` | `table_main` |
 | Table 9 `tab:fewshot` | `results_paper/tab_fewshot.json` (n_repeat=2 × 3 seeds) | `python tools/probe_fewshot.py 3 0 40 3 2` | `table_fewshot` |
@@ -115,6 +115,10 @@ Notes.
 - Tables 5 and 6 come from one run by construction: the same training set is evaluated against
   three test sets that differ by one factor each, which is what makes the session/specimen
   decomposition meaningful.
+- The notch and high-pass columns of Table 6 are separate runs of the same script with
+  `--filter=notch` and `--filter=highpass`, which mask the window in the frequency domain and
+  renormalise it before training. They are comparable seed by seed with the unfiltered column
+  because every run draws its split from `RandomState(seed)` with the same code path.
 - The merged files (`tab_synth.json`, `tab_leak.json`) were produced either by the runner's
   `n_repeat` argument or by `python tools/merge_runs.py out.json runA.json runB.json`, which
   refuses to merge runs whose configurations differ. The per-run inputs are kept alongside them.

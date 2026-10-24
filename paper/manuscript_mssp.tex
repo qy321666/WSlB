@@ -613,7 +613,9 @@ Filtering it away answers the objection. After high-pass filtering at
 $0.989$; the margin moves from $0.000$ to $+0.003$. Removing the rig tone does
 not reveal a hidden class signature --- there is none to reveal in the magnitude
 spectrum --- which is the opposite of what happens on CWRU, where the
-between-class cosine is $0.626$ in every load.
+between-class cosine is $0.626$ in every load. Filtering before \emph{training}
+rather than before the statistic gives the same answer, and
+Section~\ref{sec:pb_filter} reports that control.
 
 The two facts together identify the mechanism. The class separation that makes
 CWRU look easy is not a property of the fault classes; it is a property of the
@@ -675,20 +677,31 @@ different recording session of the same specimen.
 
 \begin{table}[t]
 \centering
-\caption{Decomposing the optimism. One training set (files 1--4 of five
-bearings per class, first $70\%$ of windows) is evaluated on three test sets
-that differ by exactly one factor each. Same condition, epochs and seeds as
-Table~\ref{tab:pb_leak}; the L1 and L3 rows are that table's two columns.}
+\caption{Decomposing the optimism, and the same decomposition with the rig tone
+removed. One training set (files 1--4 of five bearings per class, first $70\%$
+of windows) is evaluated on three test sets that differ by exactly one factor
+each: L2 moves only the recording session, L3 moves the specimen as well. Same
+condition, epochs and seeds as Table~\ref{tab:pb_leak}; the \emph{no filter}
+column is that table's two endpoints. In the last two columns every window is
+masked in the frequency domain and renormalised before training, and the whole
+procedure is repeated from scratch: the notch removes $100$\,Hz and its first
+twenty harmonics with $\pm2$ bins each, and the high-pass is the $2$\,kHz
+control of Table~\ref{tab:bench}.}
 \label{tab:pb_levels}
 \small
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{llcc}
+\begin{tabular}{lccc}
 \toprule
-Test set & Changes from the level above & macro-F1 & Drop \\
+ & No filter & Notch & High-pass \\
 \midrule
-L1 same file, held-out windows & ---                       & $0.938$ & \\
-L2 files 5--8, same bearings   & recording session only    & $0.755$ & $+0.182$ \\
-L3 held-out bearings           & specimen as well          & $0.597$ & $+0.158$ \\
+Spectral energy removed        & ---      & $93.3\%$ & $99.7\%$ \\
+L1 same file, held-out windows & $0.938$  & $0.903$  & $0.914$ \\
+L2 files 5--8, same bearings   & $0.755$  & $0.766$  & $0.773$ \\
+L3 held-out bearings           & $0.597$  & $0.607$  & $0.589$ \\
+\midrule
+Session term (L1$-$L2)         & $+0.182$ & $+0.137$ & $+0.141$ \\
+Specimen term (L2$-$L3)        & $+0.158$ & $+0.160$ & $+0.184$ \\
+Total optimism (L1$-$L3)       & $+0.340$ & $+0.297$ & $+0.324$ \\
 \bottomrule
 \end{tabular}
 }
@@ -710,6 +723,38 @@ was measured in, which is what one expects if the specimen term is carried by
 that bearing's individual spectral signature. Second, $L3 = 0.597$ is above
 chance, so cross-specimen transfer is not zero; it is roughly the level the
 classes would reach from the fault \emph{physics} alone.
+
+\subsection{The decomposition is not carried by the rig tone}
+\label{sec:pb_filter}
+
+The $100$\,Hz line of Section~\ref{sec:diag2} is a property of the test rig
+rather than of any bearing, so it cannot encode a specimen's identity. A reader
+may nevertheless object that it is nearly all the classifier sees, and hence
+that the decomposition above measures nothing but the recovery of that one
+line. We test this by removing the line before training and repeating the whole
+decomposition with the same splits, seeds and schedule. Two filters are used: a
+notch at $100$\,Hz and its first twenty harmonics, $\pm2$ bins each, which
+discards $93.3\%$ of the total spectral energy, and the $2$\,kHz high-pass of
+Table~\ref{tab:bench}, which discards $99.7\%$.
+
+Both filters leave the conclusion of the section standing
+(Table~\ref{tab:pb_levels}). Same-recording evaluation moves little --- L1 is
+$0.903$ and $0.914$ against $0.938$ unfiltered --- although more than nine
+tenths of the energy is gone. Total optimism is $+0.297$ and $+0.324$ against
+$+0.340$, and it decomposes in the same proportion: the specimen term is
+$+0.160$ and $+0.184$ against $+0.158$, i.e.\ unchanged within the seed spread,
+while the session term falls to $+0.137$ and $+0.141$ from $+0.182$. That
+reduction is systematic rather than a difference of means: compared seed by
+seed with the unfiltered run, the notch lowers the session term by
+$0.045 \pm 0.008$ standard error, and it is lower in all five seeds. About a
+quarter of the session leakage is therefore carried by the dominant line, and
+the other three quarters by the rest of the spectrum --- the bearing resonances
+and their sidebands, which is where the fault signature itself lies.
+
+That discarding more than $99\%$ of the signal energy still leaves a
+same-recording optimism of $0.29$--$0.32$ is the decisive form of this control:
+the effect is not an artefact of one conspicuous spectral line, and a protocol
+that guards against it cannot be defeated by notch-filtering the input.
 
 \subsection{Where the kinematics match the labels}
 
@@ -1029,7 +1074,9 @@ indistinguishable (margin $+0.003$ after the rig tone is filtered out, against
 $0.626$ on CWRU), so CWRU's class separation is a property of individual
 specimens rather than of the classes; same-recording evaluation remains
 optimistic, by $+0.340$, of which $+0.182$ is attributable to the recording
-session alone and $+0.158$ to the change of specimen; and the physical component
+session alone and $+0.158$ to the change of specimen --- and removing the rig
+tone, which holds $93\%$ of the spectral energy, leaves $+0.297$ with the same
+split, so the optimism is not an artefact of that line; and the physical component
 of the twin becomes useful
 for the first time once its impulse train is layered on the target envelope, in
 the one setting where the labels rather than the fingerprints carry the physics
