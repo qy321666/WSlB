@@ -8,6 +8,11 @@
     fig_leakage.pdf : (a) 同录制 vs 换录制的 macro-F1(4 支撑域 x 4 配置)
                       (b) 乐观偏差 Δ = same - cross,即"标称成绩虚高多少"
 
+    fig_pb_levels.pdf : (a) Paderborn 同一训练集在 L1/L2/L3 三档评测上的 macro-F1,
+                            三条线是三种滤波条件
+                        (b) 由 (a) 的落差拆出的会话项/试件项/总乐观量,
+                            三种滤波并列 —— 去台架线后分解形状不变
+
 用法: python tools/make_figures.py
 """
 import json
@@ -188,7 +193,84 @@ def fig_leakage():
     print("wrote", p)
 
 
+# fig_pb_levels 的数据源:表 V / 表 VI 的落盘产物,由 probe_pb_levels.py 产出。
+# 同样只读文件,不抄常量 —— 图与表用的是同一批数字。
+PB_LEVEL_JSON = {"no filter": "pb_levels.json",
+                 "notch": "pb_levels_notch.json",
+                 "2 kHz high-pass": "pb_levels_highpass.json"}
+PB_LEVEL_COL = {"no filter": "#444444", "notch": "#1f4e9c",
+                "2 kHz high-pass": "#c1272d"}
+
+
+def load_pb_levels():
+    out = {}
+    for k, f in PB_LEVEL_JSON.items():
+        p = os.path.join(HERE, "results_pb", f)
+        if not os.path.exists(p):
+            raise SystemExit(f"缺少 {p};请先跑 python tools/probe_pb_levels.py "
+                             f"--filter={k.replace('2 kHz ', '').replace(' ', '')}")
+        out[k] = json.load(open(p, encoding="utf-8"))["mean"]
+    return out
+
+
+def fig_pb_levels(path=None):
+    """三层泄漏分解:(a) 三档评测上的成绩,(b) 拆出的两项 + 总量。"""
+    L = load_pb_levels()
+    conds = list(L)
+
+    fig, ax = plt.subplots(1, 2, figsize=(7.16, 2.35),
+                           gridspec_kw={"width_ratios": [1.12, 1]})
+    a, b = ax
+
+    xs = np.arange(3)
+    for k in conds:
+        m = L[k]
+        a.plot(xs, [m["L1"], m["L2"], m["L3"]], "-o", color=PB_LEVEL_COL[k],
+               ms=4.2, lw=1.0, label=k)
+    a.axhline(1 / 3, color="0.55", lw=0.6, ls=":")
+    a.text(2.02, 1 / 3, "chance", fontsize=5.5, color="0.45",
+           va="bottom", ha="right")
+    a.set_xticks(xs)
+    a.set_xticklabels(["$L_1$\nsame\nrecording", "$L_2$\ncross-\nrecording",
+                       "$L_3$\ncross-\nspecimen"], fontsize=6.5)
+    a.set_xlim(-0.25, 2.25)
+    a.set_ylim(0.30, 0.99)
+    a.set_ylabel("macro-F1")
+    a.set_title("(a) One training set, three evaluation sets", fontsize=8)
+    a.legend(fontsize=6.2, loc="lower left", handlelength=1.3,
+             labelspacing=0.25, borderpad=0.3)
+
+    groups = [("session\n$L_1-L_2$", lambda m: m["L1"] - m["L2"]),
+              ("specimen\n$L_2-L_3$", lambda m: m["L2"] - m["L3"]),
+              ("total\n$L_1-L_3$", lambda m: m["L1"] - m["L3"])]
+    w = 0.26
+    for j, k in enumerate(conds):
+        v = [f(L[k]) for _, f in groups]
+        pos = np.arange(len(groups)) + (j - 1) * w
+        b.bar(pos, v, w, color=PB_LEVEL_COL[k], lw=0)
+        for p_, y_ in zip(pos, v):
+            b.text(p_, y_ + 0.008, f"{y_:.3f}", ha="center", fontsize=5.2,
+                   color=PB_LEVEL_COL[k])
+    b.set_xticks(np.arange(len(groups)))
+    b.set_xticklabels([g for g, _ in groups], fontsize=6.5)
+    b.set_xlim(-0.55, len(groups) - 0.45)
+    b.set_ylim(0, 0.46)
+    b.set_ylabel("macro-F1 gap")
+    b.set_title("(b) What the gaps are made of", fontsize=8)
+
+    for p_ in ax:
+        p_.tick_params(labelsize=6.5)
+        p_.grid(axis="y", alpha=0.15, lw=0.4)
+        p_.set_axisbelow(True)
+    fig.tight_layout(pad=0.35)
+    p = path or os.path.join(OUT, "fig_pb_levels.pdf")
+    fig.savefig(p, bbox_inches="tight")
+    plt.close(fig)
+    print("wrote", p)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fig_spectra()
     fig_leakage()
+    fig_pb_levels()

@@ -481,7 +481,7 @@ only $0.68$--$0.77$. The widely used S0$\rightarrow$S3 direction is hard mainly
 because load~3 is peculiar; results reported on that direction alone should not
 be generalized.
 
-\begin{figure}[t]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{figs/fig_leakage.pdf}
 \caption{Same-recording versus cross-recording evaluation ($k=5$, three
@@ -524,7 +524,7 @@ for a claim about outer versus inner race specifically.
 
 \subsection{Class-conditional spectra are a rig property, not a class property}
 
-\begin{figure}[t]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{figs/fig_spectra.pdf}
 \caption{Class-mean magnitude spectra under the identical, unsmoothed
@@ -689,7 +689,9 @@ a different physical bearing. CWRU cannot separate them, because each class is a
 single specimen. Paderborn can, because each of the numbered bearings was
 measured $20$ times under the same condition: a model can be trained on files 1--4 of a
 set of bearings and tested on files 5--8 of exactly those same bearings --- a
-different recording session of the same specimen.
+different recording session of the same specimen. The three test sets are drawn
+as a ladder in Fig.~\ref{fig:pb_levels}(a), where the drop between consecutive
+points is exactly one of the two terms computed below.
 
 \begin{table}[t]
 \centering
@@ -772,6 +774,28 @@ That discarding more than $99\%$ of the signal energy still leaves a
 same-recording optimism of $0.32$--$0.36$ is the decisive form of this control:
 the effect is not an artefact of one conspicuous spectral line, and a protocol
 that guards against it cannot be defeated by notch-filtering the input.
+Fig.~\ref{fig:pb_levels} draws the same numbers: in (a) the three ladders are
+nearly parallel, and in (b) the session bars fall under either filter while the
+specimen bars do not.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{figs/fig_pb_levels.pdf}
+\caption{The decomposition of Table~\ref{tab:pb_levels}, and the same
+decomposition with the rig tone removed. (a)~One training set, three
+evaluation sets that differ by one factor each; the drop between consecutive
+markers is exactly one of the terms plotted in (b). The three curves are the
+unfiltered data and the two filtered variants, and they lie close enough
+together that removing $93.3\%$ (notch) or $99.7\%$ (high-pass) of the spectral
+energy moves any level by at most $0.07$ without removing the decline.
+(b)~The two terms and their sum, bars are means over ten seeds. Filtering
+reduces the session term from $0.161$ to $0.127$ and $0.132$, roughly a fifth,
+and leaves the specimen term without a consistent direction ($0.225$ to $0.195$
+and $0.226$). The total therefore stays in $0.32$--$0.36$: same-recording
+evaluation remains optimistic in a form that filtering the input does not
+remove.}
+\label{fig:pb_levels}
+\end{figure}
 
 \subsection{Where the kinematics match the labels}
 
@@ -1126,7 +1150,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.3})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.4})
 and are also provided as supplementary material to this
 submission.
 

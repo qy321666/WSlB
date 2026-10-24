@@ -343,8 +343,8 @@ def table_pb_levels():
 def table_pb_filter():
     """加滤波后重训的三层分解:results_pb/pb_levels_{notch,highpass}.json。
 
-    正文 6.x 节声称两件事:(1) 滤波后乐观量仍大、分解比例不变;
-    (2) 会话项的五 seed 配对下降为 0.045 ± 0.008(标准误)。
+    正文 6.x 节与图 3 声称两件事:(1) 滤波后乐观量仍大、分解比例不变;
+    (2) 会话项的十 seed 配对下降为 0.034 ± 0.012 / 0.028 ± 0.011(标准误)。
     """
     print("\n表 VI 滤波列 / sec:pb_filter  —— pb_levels_{notch,highpass}.json")
     base_p = os.path.join(HERE, "results_pb", "pb_levels.json")
@@ -390,6 +390,11 @@ def table_pb_filter():
         diff = s1 - s0
         chk("表VI", f"{k} 试件项变化", float(diff.mean()), dm)
         chk("表VI", f"{k} 试件项配对标准误", float(diff.std(ddof=1) / np.sqrt(len(diff))), se, tol=0.001)
+    # 图 3 题注:滤波使任一档成绩的最大位移 = 0.072(取两种滤波、三档里最大的绝对差)
+    shift = max(abs(d["mean"][lv] - base["mean"][lv])
+                for d in (json.load(open(p, encoding="utf-8")) for p in paths.values())
+                for lv in ("L1", "L2", "L3"))
+    chk("图3", "滤波使任一档成绩的最大位移", float(shift), 0.072)
 
 
 # ------------------------------------------------------- 表 III：CWRU 同录制泄漏

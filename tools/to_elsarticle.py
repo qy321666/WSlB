@@ -117,6 +117,11 @@ def convert(src: str) -> str:
     body = body.replace(r"\begin{figure*}", r"\begin{figure}")
     body = body.replace(r"\end{figure*}", r"\end{figure}")
 
+    # 2d) 只给 [t] 的图在 preprint 里会一路滞留到文末:12pt 单栏下页顶几乎总被
+    #     表格占满,图 2、图 3 实测落在参考文献之后(第 28、29 页)。放开 h/b/p,
+    #     三张图分别回到第 10、12、17 页,紧挨着引用它们的正文。纯排版,不改文字。
+    body = body.replace(r"\begin{figure}[t]", r"\begin{figure}[htbp]")
+
     # 4) 其余宽度宏不动:elsarticle 单栏下 \columnwidth 与 \linewidth 等价,
     #    保留原样可以让下面的自查按字面比对。
 
@@ -147,7 +152,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.3})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.4})
 and are also provided as supplementary material to this
 submission.
 
@@ -185,7 +190,8 @@ def main():
                   .replace(r"\begin{table*}", r"\begin{table}")
                   .replace(r"\end{table*}", r"\end{table}")
                   .replace(r"\begin{figure*}", r"\begin{figure}")
-                  .replace(r"\end{figure*}", r"\end{figure}"))
+                  .replace(r"\end{figure*}", r"\end{figure}")
+                  .replace(r"\begin{figure}[t]", r"\begin{figure}[htbp]"))
             out.append(s)
         return out
 
