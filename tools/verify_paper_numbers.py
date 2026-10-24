@@ -325,6 +325,8 @@ def table_pb_levels():
     chk("表VI", "L2 跨录制同轴承", m["L2"], 0.730)
     chk("表VI", "会话项 L1-L2", m["L1"] - m["L2"], 0.161)
     chk("表VI", "试件项 L2-L3", m["L2"] - m["L3"], 0.225)
+    # 正文:乐观量占"超出随机"部分的三分之二以上(0.386 / (0.891-0.333) = 0.69)
+    chk("表V", "乐观量占超出随机部分", (m["L1"] - m["L3"]) / (m["L1"] - 0.333), 0.69)
     # 正文/disclose:第 6 个 seed 训练未收敛,重跑同一配置收敛
     chk("表V", "未收敛 run 的训练集 F1", d["per_seed"]["fit"][6], 0.597, tol=0.01)
     rp = os.path.join(HERE, "results_pb", "pb_levels_s6rerun.json")

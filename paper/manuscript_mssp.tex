@@ -664,8 +664,9 @@ consequence of drawing support and test windows from one recording, and it
 reproduces wherever a benchmark is organized as a small number of long
 recordings. We also note that under a bearing-disjoint protocol the features do
 retain \emph{some} transferable signal ($0.505$ against $0.333$ chance) --- the
-point is not that the task is unlearnable, but that more than half of the
-apparent performance is leakage.
+point is not that the task is unlearnable, but that the optimism accounts for
+more than two thirds of the performance above chance
+($0.386$ of $0.558$).
 
 The spread is larger here than on CWRU, and one of the ten runs deserves a
 comment. Seed~6 failed to converge: its macro-F1 on the \emph{training} set is
@@ -685,8 +686,8 @@ The two endpoints above leave one thing unexplained, and it is the thing that
 matters most for the interpretation: between them, \emph{two} factors change at
 once. The bearing-disjoint test set is a different recording session \emph{and}
 a different physical bearing. CWRU cannot separate them, because each class is a
-single specimen. Paderborn can, because each of its 22 bearings was measured
-$20$ times under the same condition: a model can be trained on files 1--4 of a
+single specimen. Paderborn can, because each of the numbered bearings was
+measured $20$ times under the same condition: a model can be trained on files 1--4 of a
 set of bearings and tested on files 5--8 of exactly those same bearings --- a
 different recording session of the same specimen.
 
@@ -996,8 +997,8 @@ few-shot split was drawn. Future work should state whether support and test
 come from the same recording, and ideally report both. The same control is
 cheap wherever a dataset contains several independent specimens per class: hold
 out specimens, not windows. Our own experience is a case in point. The
-secondary tables in this paper are reported over six or twenty runs rather than
-the conventional three, because repeated execution of \emph{the same command}
+secondary tables in this paper are reported over six, ten or twenty runs rather
+than the conventional three, because repeated execution of \emph{the same command}
 with the same seeds moved a ten-seed mean by up to $0.033$ and made a
 three-seed standard deviation wrong by more than an order of magnitude. This is
 the same problem that has been documented for reinforcement learning
@@ -1125,7 +1126,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.2})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.3})
 and are also provided as supplementary material to this
 submission.
 
