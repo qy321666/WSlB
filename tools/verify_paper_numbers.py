@@ -97,6 +97,10 @@ def table_bench():
     c = SP.cwru_part()
     for l in ("0", "3"):
         chk("表IV", f"CWRU 类间 load{l}", c["between_class_cos"][l], 0.626)
+    # 正文:去掉台架线之前,CWRU 类间余弦"在每个负载上都是 0.62--0.63"
+    four = [c["between_class_cos"][l] for l in "0123"]
+    chk("表IV", "CWRU 四个负载的类间余弦区间",
+        (float(min(four)), float(max(four))), (0.62, 0.63), tol=0.002, tight=True)
     chk("表IV", "CWRU 同类 load0 vs load1", c["same_class_across_load_cos"]["S0->S1"][0], 0.870)
 
     for tag, hp, w, b in (("原始", 0.0, 1.000, 1.000), ("高通 2 kHz", 2000.0, 0.992, 0.989)):
@@ -188,6 +192,14 @@ def rig_tone():
     codes = [b for b in list_bearings(PB) if lab(b)]
     chk("§PB", "轴承数", len(codes), 21, tol=0)
     chk("§PB", "4 x 轴频 (N15)", 4 * SHAFT_HZ["N15"], 100.0, tol=0.01)
+    # 正文:1500 rpm 下 BPFO 76 Hz(周期 13 ms);1024 点窗"只比一个周期略长",
+    # 4096 点窗"约五个周期"。这个量驱动了窗长的选择,此前没有核对过。
+    from pb_utils import char_freqs_pb
+    bpfo = char_freqs_pb(SHAFT_HZ["N15"])[0]
+    chk("§PB", "BPFO (N15, Hz)", bpfo, 76.3, tol=0.05)
+    chk("§PB", "BPFO 周期 (ms)", 1000.0 / bpfo, 13.1, tol=0.05)
+    chk("§PB", "1024 点窗内的 BPFO 周期数", 1024.0 / FS_PB * bpfo, 1.22, tol=0.01)
+    chk("§PB", "4096 点窗内的 BPFO 周期数", 4096.0 / FS_PB * bpfo, 4.88, tol=0.01)
 
     c0 = int(np.argmin(np.abs(np.fft.rfftfreq(PW, 1.0 / FS_PB) - 100.0)))
     peaks, one, near, five = [], [], [], []
@@ -337,6 +349,14 @@ def table_pb_levels():
     # 正文:剔除该 run 后 L1 由 0.891 升到 0.931
     l1 = [v for i, v in enumerate(d["per_seed"]["L1"]) if i != 6]
     chk("表V", "剔除未收敛 run 的 L1", float(np.mean(l1)), 0.931)
+    # 正文:该 run 的乐观量 +0.12 是十个里最小的,其余九个落在 +0.13..+0.66
+    opt = np.array(d["per_seed"]["L1"]) - np.array(d["per_seed"]["L3"])
+    rest = np.delete(opt, 6)
+    chk("表V", "未收敛 run 的乐观量", float(opt[6]), 0.12, tol=0.005)
+    chk("表V", "它是十个 seed 中最小的",
+        1.0 if opt[6] <= rest.min() else 0.0, 1.0, tol=0.0)
+    chk("表V", "其余九个 run 的乐观量区间",
+        (float(rest.min()), float(rest.max())), (0.13, 0.66), tol=0.005, tight=True)
     # 正文:十 seed 的 95% 置信区间(t 分布,df=9,双侧 0.05 → 2.262)与为正的 seed 数
     for label, a, b, lo, hi, npos in (("会话项", "L1", "L2", 0.128, 0.193, 10),
                                       ("试件项", "L2", "L3", 0.076, 0.374, 9)):

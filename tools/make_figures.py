@@ -36,7 +36,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(HERE, "paper", "figs")
 CW = 1024      # CWRU 窗长(与正文一致)
 FS_CW = 12000.0
-PW = 4096      # Paderborn 窗长:64 kHz 下 1024 点装不下一个 BPFO 周期
+PW = 4096      # Paderborn 窗长:64 kHz 下 1024 点只有约一个 BPFO 周期(13 ms),分辨不出梳齿
 FS_PB = 64000.0
 
 plt.rcParams.update({

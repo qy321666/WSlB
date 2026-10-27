@@ -22,7 +22,7 @@ python tools/verify_paper_numbers.py artifacts
 
 Reads every artifact in `results_paper/`, `results_pb/` and `results/final/`, recomputes the
 quantity each table reports, compares it with the value printed in the manuscript, and prints
-one line per check. **198 checks**; exit code 0 means all agree, exit code 1 means a mismatch
+one line per check. **225 checks**; exit code 0 means all agree, exit code 1 means a mismatch
 and the offending rows are printed.
 
 Requirements: Python 3 with numpy and scipy (`requirements.txt`).
@@ -30,8 +30,8 @@ Requirements: Python 3 with numpy and scipy (`requirements.txt`).
 ## 2. The remaining checks need the raw data
 
 ```bash
-python tools/verify_paper_numbers.py raw     # 35 further checks
-python tools/verify_paper_numbers.py all     # all 233
+python tools/verify_paper_numbers.py raw     # 40 further checks
+python tools/verify_paper_numbers.py all     # all 265
 ```
 
 `raw` recomputes the deterministic statistics of Table 2, Table 4, the "Diagnosis II" section
@@ -64,9 +64,10 @@ of which change conclusions if missed:
   inner race / outer race), parsed from the fact sheet PDF shipped with each bearing. `KA08`'s
   fact sheet writes the location as `AR`, which is not in its own legend — a typo in the source
   data, so that bearing is excluded;
-- at 64 kHz a 1024-point window is only 16 ms and cannot contain one BPFO period. Every bearing
-  then looks spectrally identical (pairwise cosine ≈ 1.000) and any spectral diagnosis fails.
-  **Use a 4096-point window here**;
+- at 64 kHz a 1024-point window is only 16 ms — about one BPFO period at 1500 rpm (76 Hz,
+  13 ms), so a window rarely holds more than one impact. Every bearing then looks spectrally
+  identical (pairwise cosine ≈ 1.000) and any spectral diagnosis fails. **Use a 4096-point
+  window here** (about five periods);
 - in the subset downloaded for this paper every artificial-damage bearing is outer-ring and
   every run-to-failure bearing is inner-ring, so damage location and damage origin are
   confounded. The paper's spectral claim is an absence of class structure and is unaffected,
@@ -78,8 +79,8 @@ Two different kinds of claim; they should not be conflated.
 
 | | how it is verified | checks |
 |---|---|---|
-| Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 35 |
-| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 198 |
+| Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 40 |
+| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 225 |
 
 For the second group the check establishes **manuscript ↔ artifact** agreement, not
 **artifact ↔ fresh run**. Those tables come from training, and this hardware is not run-to-run

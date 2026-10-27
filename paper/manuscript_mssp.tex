@@ -65,12 +65,12 @@ labeled \emph{target} samples reaches $0.995$. Class identity is thus a
 per-bearing \emph{recording fingerprint}. A calibrated McFadden--Smith twin
 produces nine classes with near-identical
 spectra and, trained on twin data alone, reaches macro-F1 $0.123$ (chance
-$0.10$). Its few-shot protocol compounds this: support and test
-windows share the fingerprint, so cross-recording evaluation lowers reported
-macro-F1 by $0.15$--$0.19$ (up to $0.31$) and equalizes
-augmentation-based methods with the trivial baseline. Coloring white noise with
-the target envelope is the most robust augmentation when the target recording
-is atypical; adding a physical impulse train degrades fidelity and
+$0.10$). The standard few-shot protocol compounds this:
+support and test windows share the fingerprint, so cross-recording evaluation
+lowers reported macro-F1 by $0.15$--$0.19$ (up to $0.31$) and leaves
+augmentation at the level of the trivial baseline. Coloring white noise with
+the target envelope is the most robust augmentation for an atypical target
+recording; adding a physical impulse train degrades fidelity and
 accuracy. On Paderborn, where several bearings share each class, class-mean
 spectra remain indistinguishable (cosine $1.000$) although classes are defined
 by damage location; there same-recording optimism of $+0.386$ splits
@@ -114,13 +114,12 @@ training with simulated faults improves cross-domain accuracy
 \cite{liu2024twin, xu2024dt, zhang2023dt, kumar2024dt, ming2026physics,
 xiao2026sim2real}.
 
-This paper asks a prior question that the field has largely skipped:
-\emph{what class-related information can a physical simulator actually
-supply on the benchmarks we use to test it?} We answer it for the most widely
-used benchmark, the CWRU 12\,kHz drive-end dataset, and the answer is
-uncomfortable: on this benchmark the simulator supplies essentially nothing,
-for a structural reason, and the experimental protocol used to evaluate such
-methods is itself inflating results.
+This paper asks a prior question: \emph{what class-related information can a
+physical simulator actually supply on the benchmarks we use to test it?} We
+answer it for the most widely used benchmark, the CWRU 12\,kHz drive-end
+dataset. There the simulator supplies essentially nothing, for a structural
+reason, and the protocol used to evaluate such methods inflates the results it
+reports.
 
 \subsection{Contributions}
 \begin{itemize}
@@ -146,9 +145,10 @@ recording is atypical. Adding a physical impulse train on top of it
 \emph{degrades} both domain fidelity and accuracy, consistently across
 settings (Sections~\ref{sec:method} and~\ref{sec:results}).
 \item \textbf{C5 (side finding).} Load~3 of CWRU is an outlier operating
-condition: label-free transfer among loads 0--2 exceeds $0.98$, while any
-transfer involving load~3 falls to $0.64$--$0.76$. Conclusions drawn from the
-popular S0$\rightarrow$S3 direction alone do not generalize
+condition: a label-free model transfers among loads 0--2 at $0.93$--$1.00$ but
+reaches only $0.71$ on load~3, and labeled support from the other loads
+transfers into load~3 at $0.68$--$0.77$. Conclusions drawn from the popular
+S0$\rightarrow$S3 direction alone do not generalize
 (Section~\ref{sec:protocol}).
 \item \textbf{C6 (cross-benchmark).} On Paderborn, where several independent
 bearings share each damage class, class-mean magnitude spectra of healthy,
@@ -233,19 +233,17 @@ $\{\textsc{Normal}\} \cup \{B,IR,OR\} \times \{0.007'', 0.014'', 0.021''\}$,
 using the official files for the four loads $\{0,1,2,3\}$
 ($1730$--$1797$\,rpm). Windows of $1024$ samples with stride $512$ are
 $z$-scored individually.\footnote{Every spectral scalar reported in this paper
-is reproduced, from the raw data, by one script released with the code
-(\texttt{tools/probe\_spectral\_numbers.py}). We make the point explicitly
-because a claim of this paper is that numbers reported in this area do not
-always survive re-derivation, and that claim would be worthless if our own did
-not.}
+is reproduced from the raw data by one script released with the code
+(\texttt{tools/probe\_spectral\_numbers.py}), and every table entry by
+\texttt{tools/verify\_paper\_numbers.py}.}
 
-\subsection{Few-shot split, and the defect we exploit later}
+\subsection{The few-shot split}
 For a target load, each class is split in time order: the last $40\%$ of
 windows form the held-out test set; from the first $60\%$, $k$ windows per
 class are drawn (with the seed) as the labeled \emph{support} set, and the rest
 form an unlabeled \emph{pool}. Crucially, the support and test windows come
-from the \emph{same recording}. Section~\ref{sec:protocol} shows this is not a
-detail.
+from the \emph{same recording}. Section~\ref{sec:protocol} shows how much of
+the reported score that choice accounts for.
 
 \subsection{Classifier and training}
 \label{sec:classifier}
@@ -280,8 +278,8 @@ calibrated against real CWRU spectra: the resonance range, the resonance
 bandwidth per defect size, the background-noise colouring, and the
 impulse-to-harmonic power ratio were all fitted so that synthetic
 band-energy shares match measured ones. In particular the synthetic peak
-envelope spectrum lands on the correct BPFO, so the twin is \emph{not} an
-uncalibrated straw man.
+envelope spectrum lands on the correct BPFO, so the twin reproduces the fault
+kinematics that the benchmark labels describe.
 
 \subsection{Twin data are a different domain, and carry no class information}
 Training only on twin data and testing on the real target load
@@ -299,7 +297,7 @@ the score.
 configuration repeated twice --- and the $\pm$ is the standard deviation over
 those $20$ runs. ``Disc.''\ is a domain discriminator
 trained on backbone features to separate the synthetic source from real target
-data ($0.5$ = indistinguishable). The repeat is not padding: the two
+data ($0.5$ = indistinguishable). The two
 repetitions of the target-fingerprint row differ by $0.033$ in the mean of ten
 seeds, and a single ten-seed draw would understate that row's spread by a
 factor of two.}
@@ -332,8 +330,7 @@ $0.939$); averaged over all six load pairs the value is $0.944$. Class
 differences therefore survive a change of load and are a stable property of the
 \emph{recording}, which is why real-data methods work well here.
 Table~\ref{tab:bench} reports a separate, unsmoothed statistic
-(Section~\ref{sec:paderborn}) and its numbers are systematically lower for that
-reason alone.
+(Section~\ref{sec:paderborn}), which yields systematically lower cosines.
 
 \subsection{But they are not predictable from fault physics}
 The nine synthetic fault classes have near-identical mean spectra
@@ -379,10 +376,9 @@ looks like'' is therefore a property of that particular bearing and recording
 session. A simulator cannot know which bearing a target recording used. The
 fingerprint is estimable from target labels (Section~\ref{sec:method}) but not
 derivable from fault mechanics. In the terminology of the shortcut-learning
-literature \cite{geirhos2020shortcut}, the classifier is free to learn the
-recording as the shortcut to the label, and on this benchmark the shortcut is
-not merely easier than the intended solution --- it is the only signal present
-at all.
+literature \cite{geirhos2020shortcut}, the classifier learns the recording as
+the shortcut to the label; on this benchmark the shortcut is not merely easier
+than the intended solution but the only signal present.
 
 \section{Evaluation Protocol: Same-Recording Leakage}
 \label{sec:protocol}
@@ -452,9 +448,9 @@ Four conclusions follow.
 
 \paragraph{Same-recording evaluation is optimistic by $0.15$--$0.19$}
 Support-only training scores $0.987$--$0.999$ on its own held-out windows but
-only $0.725$--$0.871$ on other recordings (Fig.~\ref{fig:leak}). Any reported
-few-shot result on this benchmark that uses the standard split should be read
-as containing this optimism unless a cross-recording control is provided.
+only $0.725$--$0.871$ on other recordings (Fig.~\ref{fig:leak}). A few-shot
+result on this benchmark that uses the standard split contains this optimism
+unless a cross-recording control is reported alongside it.
 
 \paragraph{No augmentation reliably beats the labeled support set}
 Averaged over the four support loads, cross-recording macro-F1 is $0.834$ for
@@ -488,7 +484,8 @@ be generalized.
 seeds, two repetitions). (a)~The optimism $\Delta$ of each training configuration, per support
 load: every bar is positive, i.e.\ every configuration looks better on its own
 held-out windows than on other recordings, and the effect is largest exactly
-where the literature's favourite direction (load~3) is involved.
+where load~3 is involved --- the condition used by the most widely reported
+transfer direction.
 (b)~Averaged over the four support loads. Hollow bars are cross-recording,
 solid bars same-recording. No augmentation reliably beats training on the
 labeled support set once the evaluation is cross-recording, and adding $400$
@@ -510,17 +507,17 @@ We use 21 bearings: 6 healthy (K001--K006), 9 artificially damaged (KA series)
 and 6 damaged by accelerated lifetime tests (KI series). Classes are defined by
 \emph{damage location}, read from the damage profile that ships with each
 bearing (outer ring OR, inner ring IR, healthy) --- i.e.\ exactly the kinematic
-distinction that a fault model can express. Windows are 4096 samples (64\,ms);
-at 64\,kHz a 1024-sample window spans only 16\,ms, which is shorter than one
-BPFO period at 1500\,rpm, and we find that all bearings then produce
-indistinguishable spectra.
+distinction that a fault model can express. Windows are 4096 samples (64\,ms).
+At 64\,kHz a 1024-sample window spans only 16\,ms --- barely more than one BPFO
+period at 1500\,rpm ($76$\,Hz, $13$\,ms), so a window rarely holds more than one
+impact --- and with 1024-sample windows all bearings produce indistinguishable
+spectra, whereas the 4096-sample window holds about five periods.
 
-One caveat is recorded here rather than buried: in the subset we downloaded,
-every KA bearing is outer-ring and every KI bearing is inner-ring, so damage
-location and damage origin (artificial versus run-to-failure) are confounded.
-This does not affect the finding below, where the result is the \emph{absence}
-of any class-conditional spectral structure, but it would matter
-for a claim about outer versus inner race specifically.
+In the subset we downloaded, every KA bearing is outer-ring and every KI
+bearing is inner-ring, so damage location and damage origin (artificial versus
+run-to-failure) are confounded. The finding below is an \emph{absence} of
+class-conditional spectral structure and is unaffected, but the data cannot
+support a separate statement about outer versus inner race.
 
 \subsection{Class-conditional spectra are a rig property, not a class property}
 
@@ -544,11 +541,11 @@ $100$\,Hz rig line of Section~\ref{sec:paderborn} lands in the $93.75$\,Hz bin
 (with leakage into its neighbour at $109$\,Hz) and carries essentially all the
 energy, and the three damage
 classes are indistinguishable because everything else lies $60$\,dB below it.
-(d)~The same recordings after a $2$\,kHz high-pass removes that line --- the
-objection that one dominant tone is flattening the comparison. The 16\,kHz rig
-resonance now dominates, yet the three class means still track each other to
-within a few dB across the whole band: the absence of class structure is not an
-artefact of the tone. Compare (d) with (a), where the same statistic separates
+(d)~The same recordings after a $2$\,kHz high-pass removes that line, so the
+comparison no longer rests on it. The 16\,kHz rig resonance now dominates, yet
+the three class means still track each other to within a few dB across the whole
+band: the absence of class structure survives removal of the tone. Compare (d)
+with (a), where the same statistic separates
 the real classes by $10$--$30$\,dB.}
 \label{fig:spectra}
 \end{figure}
@@ -561,16 +558,15 @@ Fig.~\ref{fig:spectra}.
 \centering
 \caption{Class-mean magnitude spectra, identical statistic on both benchmarks:
 the \emph{unsmoothed} mean magnitude spectrum of each class, so the two
-benchmarks are directly comparable. This is deliberately not the smoothed
-envelope $A_c(f)$ of Section~\ref{sec:method} used elsewhere, which is smoother
-and yields higher cosines.
+benchmarks are directly comparable. It is distinct from the smoothed envelope
+$A_c(f)$ of Section~\ref{sec:method} used elsewhere, which yields higher
+cosines.
 ``Within'' = different specimens, same class; ``between'' = different
 specimens, different class. CWRU has one specimen per class, so only the
 between-class numbers exist there; its ``same class across loads'' row is the
 closest analogue of a within-class measurement. The last two rows remove the
-rig tone of Section~\ref{sec:paderborn} by high-pass filtering at 2\,kHz,
-which is the control for the objection that one dominant line could flatten
-everything.}
+rig tone of Section~\ref{sec:paderborn} by high-pass filtering at 2\,kHz, the
+control for a dominant rig line.}
 \label{tab:bench}
 \small
 \begin{tabular}{llcc}
@@ -600,22 +596,21 @@ all: within-class and between-class cosines are both $1.000$ to three decimals.
 The spectra are dominated by a rig tone: at 1500\,rpm the largest spectral line
 is at $100$\,Hz --- exactly four times the shaft rate --- in \emph{every one} of
 the 21 bearings (measured on the full records it falls in $99.6$--$100.1$\,Hz
-for all of them), healthy, outer-ring and inner-ring alike. In a
-$4096$-point window that line lands in the bin at $93.75$\,Hz and
+for all of them), healthy, outer-ring and inner-ring alike. In a Hann-windowed
+$4096$-point spectrum that line lands in the bin at $93.75$\,Hz and
 \emph{that single bin} carries $54\%$ of the total spectral energy
 ($53.97$--$54.31\%$ across the 21 bearings); the
 line together with two neighbouring bins on each side carries
 $99.5$--$99.8\%$.
 
-That single tone invites an obvious objection to the claim above: of course the
-class means coincide, if one line holds almost all the energy.
-Filtering it away answers the objection. After high-pass filtering at
+Because that single line holds almost all the energy, the coincidence of class
+means could in principle be an artefact of it. After high-pass filtering at
 2\,kHz the within-class cosine falls to $0.992$ and the between-class cosine to
 $0.989$; the margin moves from $0.000$ to $+0.003$. Removing the rig tone does
-not reveal a hidden class signature --- there is none to reveal in the magnitude
-spectrum --- which is the opposite of what happens on CWRU, where the
-between-class cosine is $0.626$ in every load. Filtering before \emph{training}
-rather than before the statistic gives the same answer, and
+not reveal a hidden class signature --- there is none in the magnitude
+spectrum --- the opposite of what happens on CWRU, where the between-class
+cosine stays at $0.62$--$0.63$ in every load. Filtering before \emph{training}
+rather than before the statistic gives the same answer;
 Section~\ref{sec:pb_filter} reports that control.
 
 The two facts together identify the mechanism. The class separation that makes
@@ -625,9 +620,9 @@ several specimens share a label, the separation disappears.
 
 \subsection{Same-recording leakage reproduces on a second benchmark}
 
-If the optimism of Section~\ref{sec:protocol} were an artifact of CWRU, it would
-not appear here. We train one model per seed on five bearings per class and
-evaluate it twice: on held-out windows drawn from the \emph{same} bearings
+A second benchmark tests whether the optimism of
+Section~\ref{sec:protocol} is specific to CWRU. We train one model per seed on
+five bearings per class and evaluate it twice: on held-out windows drawn from the \emph{same} bearings
 ($30\%$ of the training recordings), and on one bearing per class that the model
 has never seen. Both test sets are class-balanced and the metric is macro-F1.
 They are the two endpoints that
@@ -659,13 +654,11 @@ Support only      & $0.993$ & $0.834$ & $+0.159$ \\
 \end{table}
 
 The optimism is $+0.386$, well above the CWRU average and above CWRU's worst
-case. Same-recording evaluation is not a quirk of one benchmark; it is a
-consequence of drawing support and test windows from one recording, and it
-reproduces wherever a benchmark is organized as a small number of long
-recordings. We also note that under a bearing-disjoint protocol the features do
-retain \emph{some} transferable signal ($0.505$ against $0.333$ chance), although
-the optimism accounts for more than two thirds of the performance above chance
-($0.386$ of $0.558$).
+case. It is a consequence of drawing support and test windows from one
+recording, and it reproduces wherever a benchmark is organized as a small number
+of long recordings. Under a bearing-disjoint protocol the features do retain
+\emph{some} transferable signal ($0.505$ against $0.333$ chance), but of the
+$0.558$ by which the same-recording score exceeds chance, $0.386$ is optimism.
 
 The spread is larger here than on CWRU, and one of the ten runs deserves a
 comment. Seed~6 failed to converge: its macro-F1 on the \emph{training} set is
@@ -674,8 +667,9 @@ scores are correspondingly low. Re-running the identical configuration
 converged ($1.00$ on the training set, $L1 = 0.927$), so this is a transient
 optimization failure rather than a property of the split. We report it rather than
 replace it: the contrast is measured \emph{within} a run, and its optimism,
-$+0.12$, lies within the range of the other nine ($+0.13$ to $+0.66$). Discarding it would have raised the same-recording mean
-from $0.891$ to $0.931$.
+$+0.12$, is the smallest of the ten (the other nine span $+0.13$ to $+0.66$).
+Discarding it would have raised the same-recording mean from $0.891$ to
+$0.931$.
 
 \subsection{The optimism decomposes into a session term and a specimen term}
 
@@ -721,8 +715,8 @@ Total optimism (L1$-$L3)       & $+0.386$ & $+0.321$ & $+0.358$ \\
 }
 \end{table}
 
-The result is unambiguous, and the specimen term is the larger of the two.
-Simply re-measuring the \emph{same} bearings costs $+0.161$ macro-F1: that much
+Both terms are positive, and the specimen term is the larger. Simply
+re-measuring the \emph{same} bearings costs $+0.161$ macro-F1: that much
 of the optimism is pure session leakage, with the specimen held fixed. Changing
 the specimen on top of that costs a further $+0.225$. The two explanations that
 the CWRU protocol cannot distinguish --- ``the model keys on the recording'' and
@@ -754,14 +748,15 @@ ten runs reach a training macro-F1 of $0.98$ on average, two of them $0.88$).
 \subsection{The decomposition is not carried by the rig tone}
 \label{sec:pb_filter}
 
-The $100$\,Hz line of Section~\ref{sec:diag2} is a property of the test rig
-rather than of any bearing, so it cannot encode a specimen's identity. A reader
-may object that it is nearly all the classifier sees, so the decomposition
-measures little but the recovery of that one line. We test this by removing the line before training and repeating the whole
-decomposition with the same splits, seeds and schedule. Two filters are used: a
+The $100$\,Hz line of Section~\ref{sec:diag2} belongs to the test rig rather
+than to any bearing, so it cannot encode a specimen's identity. Because it
+dominates the spectrum, however, it could carry much of the class structure on
+its own, and the decomposition might then measure little more than the recovery
+of that one line. To test this we remove the line before training and repeat the
+whole decomposition with the same splits, seeds and schedule. Two filters are used: a
 notch at $100$\,Hz and its first twenty harmonics, $\pm2$ bins each, which
-discards $93.3\%$ of the total spectral energy, and the $2$\,kHz high-pass of
-Table~\ref{tab:bench}, which discards $99.7\%$.
+discards $93.3\%$ of the spectral energy of the untapered window, and the
+$2$\,kHz high-pass of Table~\ref{tab:bench}, which discards $99.7\%$.
 
 Both filters leave the conclusion of the section standing
 (Table~\ref{tab:pb_levels}). Same-recording evaluation moves little --- L1 is
@@ -778,10 +773,9 @@ leakage is therefore carried by the dominant line; the rest of it, and the
 whole of the specimen term, lie in the remainder of the spectrum --- the bearing
 resonances and their sidebands, which is where the fault signature itself is.
 
-That discarding more than $99\%$ of the signal energy still leaves a
-same-recording optimism of $0.32$--$0.36$ is the decisive form of this control:
-the effect is not an artefact of one conspicuous spectral line, and a protocol
-that guards against it cannot be defeated by notch-filtering the input.
+Discarding more than $99\%$ of the signal energy still leaves a same-recording
+optimism of $0.32$--$0.36$: the effect is not an artefact of one conspicuous
+spectral line, and notch-filtering the input does not remove it.
 Fig.~\ref{fig:pb_levels} draws the same numbers: in (a) the three ladders are
 nearly parallel, and in (b) the session bars fall under either filter while the
 specimen bars do not.
@@ -806,9 +800,9 @@ and $0.226$), so the total stays in $0.32$--$0.36$.}
 \subsection{Where the kinematics match the labels}
 
 The Paderborn classes are defined by damage location, so here the impulse train
-at BPFO/BPFI is not merely plausible: it is the right physics for the label. We
-therefore repeat the no-source few-shot experiment of
-Section~\ref{sec:results} with these classes, evaluating on held-out bearings.
+at BPFO/BPFI is the right physics for the label. We therefore repeat the
+no-source few-shot experiment of Section~\ref{sec:results} with these classes,
+evaluating on held-out bearings.
 
 \begin{table}[t]
 \centering
@@ -844,11 +838,10 @@ augmentation at $k=20$ ($0.266$ against $0.177$) and at $k=50$ ($0.231$ against
 $0.168$), and is level with the envelope alone at $k=5$ ($0.199$ against
 $0.203$). Both of those exceed the pure twin in all three rows.
 
-We must be equally clear about what this table cannot do. With every entry at or
-below chance, it cannot rank methods, and the differences between the
-augmentation columns lie within one standard deviation. We report it for the
-one comparison that is stable across all three values of $k$, and that is
-externally corroborated.
+The table cannot rank methods: every entry is at or below chance, and the
+differences between the augmentation columns lie within one standard deviation.
+We report it for the one comparison that is stable across all three values of
+$k$, and that is externally corroborated.
 
 \paragraph{A positive control for the mechanism}
 On CWRU, fingerprint calibration was the best augmentation and layering physics
@@ -860,10 +853,9 @@ fingerprint, so estimating the fingerprint captures the label and physics is
 redundant noise. On Paderborn we measured that the class-mean fingerprints are
 identical across classes (margin $+0.003$, Table~\ref{tab:bench}); calibrating
 to them therefore transfers no label information, and the only thing left
-carrying the label is the impulse repetition rate --- the physics. The
-methodological failure we diagnose is thus not a property of physics-based
-augmentation as such, but of applying it to a benchmark whose class labels are
-bound to individual recordings.
+carrying the label is the impulse repetition rate --- the physics. The failure
+we diagnose therefore lies in applying physics-based augmentation to a benchmark
+whose class labels are bound to individual recordings.
 
 \section{Method: Target-Domain Spectral Envelope Calibration}
 \label{sec:method}
@@ -912,7 +904,7 @@ stable configuration.
 reaches $0.91$--$1.00$, leaving almost no headroom; the differences among
 \ml{dann}, \ml{fp\_phys\_dann} and \ml{fp\_dann} are not a meaningful
 demonstration of method quality in this regime. The informative comparisons are
-in the constrained regimes of Section~\ref{sec:results}.
+in the constrained regimes of Section~\ref{sec:constrained}.
 
 \emph{Performance is bounded by the labeled support set.} The zero-label bound
 \ml{src\_pure} reaches $0.731$; merely adding the $k=5$ labeled target samples
@@ -944,6 +936,7 @@ Method & Accuracy & macro-F1 \\
 \end{table}
 
 \subsection{Constrained regimes}
+\label{sec:constrained}
 The standard protocol saturates, so the meaningful comparisons are the
 constrained ones. In the synthesis-only regime (Table~\ref{tab:synth}) the
 physics twin is at chance ($0.123$) while fingerprint-coloured white noise
@@ -989,9 +982,9 @@ rather than noisy.
 \section{Discussion and Limitations}
 \label{sec:discussion}
 
-\paragraph{Scope} The conclusion is emphatically \emph{not} that
-simulation-based augmentation is useless in general. It is that the two
-benchmarks we examine cannot test it, for different reasons that share a root.
+\paragraph{Scope} The conclusion concerns the benchmarks rather than
+simulation-based augmentation in general: the two datasets we examine cannot
+test it, for different reasons that share a root.
 On CWRU the class label is confounded with the recording, so the signal a
 classifier learns is not the fault. On Paderborn the label \emph{is} physically
 meaningful --- damage location, the very quantity whose characteristic
@@ -1019,7 +1012,7 @@ in which we observe the physical component adding anything, and it is what the
 mechanism predicts, since there the fingerprint carries no label and the only
 remaining carrier of the label is the impulse repetition rate. The pure twin
 remains the worst augmentation on \emph{both} benchmarks, and on neither does
-any augmentation beat simply training on the real labeled support samples.
+any augmentation reliably beat training on the real labeled support samples.
 
 \paragraph{Implications for reported numbers} Two papers reporting the same
 method on CWRU may differ by $0.1$--$0.3$ macro-F1 purely because of how the
@@ -1074,9 +1067,9 @@ margin $+0.003$ \\
 Physical observability & Fault characteristic frequencies visible above the
 recording's own structure & A rig tone or recording fingerprint dominates the
 band & Paderborn: $100$\,Hz line, over $99\%$ of the energy \\
-Temporal scale & The window spans at least one characteristic period at the
-sampling rate & The window is shorter than one fault cycle & Paderborn: $1024$
-samples $=16$\,ms \\
+Temporal scale & The window spans several characteristic periods at the
+sampling rate & The window holds about one fault cycle & Paderborn: $1024$
+samples $=16$\,ms, one BPFO period \\
 Synthetic validity & Synthetic and real class-conditional spectra agree, and a
 discriminator cannot separate them & The generator reproduces no target class &
 CWRU: twin macro-F1 $0.123$ \\
@@ -1085,7 +1078,9 @@ CWRU: twin macro-F1 $0.123$ \\
 }  % elsarticle-wrap
 \end{table}
 
-\paragraph{Limitations} (i) We study two datasets and one backbone. (ii) The
+\paragraph{Limitations} (i) We study two datasets and two networks of the same
+family, a full and a quarter-size ResNet; other architectures may behave
+differently. (ii) The
 cross-recording control on CWRU evaluates on a whole different load, which
 confounds the recording change with the operating-condition change; a same-load,
 different-session split is not available in CWRU, and we resort to Paderborn to
@@ -1110,32 +1105,31 @@ comparison for Paderborn uses one operating condition and 21 bearings.
 We showed that on CWRU cross-load bearing diagnosis the dominant class
 information is a per-bearing recording fingerprint that physics cannot predict,
 making simulation-based sample supplementation structurally ineffective on
-that benchmark; that
-the standard few-shot protocol leaks this fingerprint from support to test and
-inflates reported accuracy by $0.15$--$0.19$, rising to $0.31$ in the
-hardest direction; and that a compact spectral envelope calibration estimated
-from five labeled samples per class is the most robust augmentation available,
-while adding physical impulse structure on top of it consistently hurts.
+that benchmark; that the standard few-shot protocol leaks this fingerprint from
+support to test and inflates reported macro-F1 by $0.15$--$0.19$, rising to
+$0.31$ in the hardest direction; and that a compact spectral envelope
+calibration estimated from five labeled samples per class is the most robust
+augmentation available, while adding physical impulse structure on top of it
+consistently hurts.
 
-We then removed the objection that CWRU is simply a badly chosen dataset. On
+A second benchmark tests whether this picture is specific to CWRU. On
 Paderborn, where several independent bearings share each class, class-mean
 magnitude spectra of healthy, inner-ring and outer-ring bearings are
 indistinguishable (margin $+0.003$ after the rig tone is filtered out, against
 $0.626$ on CWRU), so CWRU's class separation is a property of individual
-specimens rather than of the classes; same-recording evaluation remains
+specimens rather than of the classes. Same-recording evaluation there is still
 optimistic, by $+0.386$, of which $+0.161$ is attributable to the recording
-session alone and $+0.225$ to the change of specimen --- and removing the rig
-tone, which holds $93\%$ of the spectral energy, leaves $+0.321$, still
-dominated by the specimen term, so the optimism is not an artefact of that
-line; and the physical component
-of the twin becomes useful
-for the first time once its impulse train is layered on the target envelope, in
-the one setting where the labels rather than the fingerprints carry the physics
---- though the pure twin is still the worst augmentation there, and no
-augmentation on either benchmark beats training on the real labeled support
-samples. The practical recommendation is therefore not to abandon physics-based
-generation, but to validate the benchmark before trusting either the positive or
-the negative result obtained on it.
+session alone and $+0.225$ to the change of specimen. Removing the rig tone,
+which holds $93\%$ of the spectral energy, leaves $+0.321$, still dominated by
+the specimen term, so the optimism is not an artefact of that line. The
+physical component of the twin becomes useful for the first time once its
+impulse train is layered on the target envelope, the one setting where the
+labels rather than the fingerprints carry the physics --- though the pure twin
+is still the worst augmentation there, and under cross-recording or
+bearing-disjoint evaluation no augmentation on either benchmark reliably beats
+training on the real labeled support samples. The practical
+recommendation is to validate the benchmark before trusting either the positive
+or the negative result obtained on it.
 
 % >>> elsarticle-decl BEGIN(转换脚本插入,不是正文)
 \section*{CRediT authorship contribution statement}
@@ -1156,7 +1150,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.8})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.9})
 and are also provided as supplementary material to this
 submission.
 
