@@ -363,6 +363,11 @@ def table_pb_levels():
         chk("表V", "换 backbone 的试件项", bm["L2"] - bm["L3"], 0.189)
         chk("表V", "两个 backbone 的总乐观量之差",
             (m["L1"] - m["L3"]) - (bm["L1"] - bm["L3"]), 0.040, tol=0.001)
+        # 正文:小网络的训练集 F1 均值 0.98,其中 2 个 run 只到 0.88
+        chk("表V", "换 backbone 的训练集 F1 均值",
+            float(np.mean(b["per_seed"]["fit"])), 0.98, tol=0.005)
+        chk("表V", "换 backbone 训练不足 0.9 的 run 数",
+            float(np.sum(np.array(b["per_seed"]["fit"]) < 0.9)), 2, tol=0.001)
     # 正文:十 seed 的留出集覆盖 15/21 只试件(5/6 healthy、4/6 IR、6/9 OR)
     cov_p = os.path.join(HERE, "results_pb", "pb_split_coverage.json")
     if os.path.exists(cov_p):
