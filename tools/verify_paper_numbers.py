@@ -337,6 +337,28 @@ def table_pb_levels():
     # 正文:剔除该 run 后 L1 由 0.891 升到 0.931
     l1 = [v for i, v in enumerate(d["per_seed"]["L1"]) if i != 6]
     chk("表V", "剔除未收敛 run 的 L1", float(np.mean(l1)), 0.931)
+    # 正文:十 seed 的 95% 置信区间(t 分布,df=9,双侧 0.05 → 2.262)与为正的 seed 数
+    for label, a, b, lo, hi, npos in (("会话项", "L1", "L2", 0.128, 0.193, 10),
+                                      ("试件项", "L2", "L3", 0.076, 0.374, 9)):
+        v = np.array(d["per_seed"][a]) - np.array(d["per_seed"][b])
+        se = v.std(ddof=1) / np.sqrt(len(v))
+        chk("表V", f"{label} 95%CI 下界", float(v.mean() - 2.262 * se), lo, tol=0.001)
+        chk("表V", f"{label} 95%CI 上界", float(v.mean() + 2.262 * se), hi, tol=0.001)
+        chk("表V", f"{label} 为正的 seed 数", float((v > 0).sum()), npos, tol=0.001)
+        # 正文:双侧符号检验 p = 2*P(X>=npos | n=10, p=0.5)。0.002(10/10)、0.021(9/10)
+        from math import comb
+        p_sign = 2.0 * sum(comb(len(v), i) for i in range(npos, len(v) + 1)) / 2 ** len(v)
+        chk("表V", f"{label} 符号检验 p", p_sign,
+            {"会话项": 0.002, "试件项": 0.021}[label], tol=0.001)
+    # 正文:十 seed 的留出集覆盖 15/21 只试件(5/6 healthy、4/6 IR、6/9 OR)
+    cov_p = os.path.join(HERE, "results_pb", "pb_split_coverage.json")
+    if os.path.exists(cov_p):
+        c = json.load(open(cov_p, encoding="utf-8"))
+        chk("表V", "留出集覆盖的轴承数", c["n_distinct_held_out"], 15, tol=0.001)
+        chk("表V", "覆盖的轴承总数", c["bearings_total"], 21, tol=0.001)
+        for cl, n in (("HEALTHY", 5), ("IR", 4), ("OR", 6)):
+            chk("表V", f"覆盖的 {cl} 只数",
+                float(len(c["distinct_by_class"][cl])), n, tol=0.001)
 
 
 # --------------------------------- 表 VI 后两列 / 6.x 小节：去台架线后重训

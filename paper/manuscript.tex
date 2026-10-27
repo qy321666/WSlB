@@ -711,9 +711,18 @@ than the session term: dropping it has a standard deviation of $0.209$ against
 $0.046$ for the session drop, and one of ten seeds (seed~3, $L3 = 0.77$) even
 reverses the sign. Which bearing is held out matters more than which session it
 was measured in, which is what one expects if the specimen term is carried by
-that bearing's individual spectral signature. Second, $L3 = 0.505$ is well above
+that bearing's individual spectral signature. The ten splits between them draw on
+$15$ of the $21$ bearings (five of the six healthy, four of the six inner-ring
+and six of the nine outer-ring), so what varies across seeds is a property of
+specimens in general rather than one unlucky draw.
+
+Second, $L3 = 0.505$ is well above
 chance, so cross-specimen transfer is not zero: part of the fault physics does
-survive the change of specimen.
+survive the change of specimen. Neither term rests on a handful of runs: over
+the ten seeds the session term is positive in all ten and the specimen term in
+nine, a two-sided sign test giving $p = 0.002$ and $p = 0.021$ without any
+normality assumption, and the $95\%$ confidence intervals for the two means are
+$+0.128$ to $+0.193$ and $+0.076$ to $+0.374$.
 
 \subsection{The decomposition is not carried by the rig tone}
 \label{sec:pb_filter}
@@ -758,9 +767,9 @@ specimen bars do not.
 decomposition with the rig tone removed. (a)~One training set, three
 evaluation sets that differ by one factor each; the drop between consecutive
 markers is exactly one of the terms plotted in (b). The three curves are the
-unfiltered data and the two filtered variants, and they lie close enough
-together that removing $93.3\%$ (notch) or $99.7\%$ (high-pass) of the spectral
-energy moves any level by at most $0.07$ without removing the decline.
+unfiltered data and the two filtered variants: removing $93.3\%$ (notch) or
+$99.7\%$ (high-pass) of the spectral energy moves any level by at most $0.07$
+and does not remove the decline.
 (b)~The two terms and their sum, bars are means over ten seeds. Filtering
 reduces the session term from $0.161$ to $0.127$ and $0.132$, roughly a fifth,
 and leaves the specimen term without a consistent direction ($0.225$ to $0.195$

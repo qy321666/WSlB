@@ -100,7 +100,7 @@ Every numbered table has an on-disk artifact and a computing function in
 | Table 2 `tab:classsep` | none — recomputed from `data/cwru` | `python tools/probe_classsep.py` | `table_classsep` (raw) |
 | Table 3 `tab:leak` | `results_paper/tab_leak.json` (n_repeat=2 × 3 seeds) | `python tools/probe_leakage.py all 60 3 5 2` | `table_leak` |
 | Table 4 `tab:bench` | `results_pb/spectra_bench.json` (recomputed anyway) | `python tools/probe_spectra.py` | `table_bench` (raw) |
-| Table 5 `tab:pb_leak` | `results_pb/pb_levels.json` (10 seeds, 200 epochs) | `python tools/probe_pb_levels.py 200 10` | `table_pb_levels` |
+| Table 5 `tab:pb_leak` | `results_pb/pb_levels.json` (10 seeds, 200 epochs), plus `results_pb/pb_split_coverage.json` for the bearing coverage quoted in the text (15 of 21, `python tools/pb_split_coverage.py 10`) | `python tools/probe_pb_levels.py 200 10` | `table_pb_levels` |
 | Table 6 `tab:pb_levels` | `results_pb/pb_levels.json`, plus `results_pb/pb_levels_notch.json` and `pb_levels_highpass.json` for the two filtered columns (`pb_levels.log`, `pb_levels_notch.log`, `pb_levels_highpass.log`) | `python tools/probe_pb_levels.py 200 10`; add `--filter=notch` and `--filter=highpass` for the last two columns | `table_pb_levels`, `table_pb_filter` |
 | Table 7 `tab:pb_fewshot` | `results_pb/d_twin_k5.json`, `d_twin_k20.json`, `d_twin_k50.json` | `python tools/probe_paderborn.py d` | `table_pb_fewshot` |
 | Table 8 `tab:main` | `results/final/*.csv` (7 methods × 5 seeds) | `bash run_s2.sh all` then `python tools/collect_results.py` | `table_main` |
