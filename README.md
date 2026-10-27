@@ -107,6 +107,7 @@ Every numbered table has an on-disk artifact and a computing function in
 | Table 9 `tab:fewshot` | `results_paper/tab_fewshot.json` (n_repeat=2 × 3 seeds) | `python tools/probe_fewshot.py 3 0 40 3 2` | `table_fewshot` |
 | Fig. 1 `fig:leakage` | `paper/figs/fig_leakage.pdf` | `python tools/make_figures.py` | the same numbers as Table 3 |
 | Fig. 2 `fig:spectra` | `paper/figs/fig_spectra.pdf` | `python tools/make_figures.py` | the same numbers as "Diagnosis II" |
+| Backbone check | `results_pb/pb_levels_smallresnet.json` | `python tools/probe_pb_backbone.py 200 10 --arch=smallresnet` | `table_pb_levels` |
 | Fig. 3 `fig:pb_levels` | `paper/figs/fig_pb_levels.pdf` | `python tools/make_figures.py` | the same numbers as Tables 5 and 6 |
 
 Notes.

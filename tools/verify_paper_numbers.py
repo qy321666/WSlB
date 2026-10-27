@@ -350,6 +350,19 @@ def table_pb_levels():
         p_sign = 2.0 * sum(comb(len(v), i) for i in range(npos, len(v) + 1)) / 2 ** len(v)
         chk("表V", f"{label} 符号检验 p", p_sign,
             {"会话项": 0.002, "试件项": 0.021}[label], tol=0.001)
+    # 正文:换 backbone(1/4 参数的 ResNet)复核三层分解
+    bb_p = os.path.join(HERE, "results_pb", "pb_levels_smallresnet.json")
+    if os.path.exists(bb_p):
+        b = json.load(open(bb_p, encoding="utf-8"))
+        bm = b["mean"]
+        chk("表V", "换 backbone 的参数量", b["n_params"], 30099, tol=0.5)
+        chk("表V", "换 backbone 的 L1", bm["L1"], 0.883)
+        chk("表V", "换 backbone 的 L2", bm["L2"], 0.727)
+        chk("表V", "换 backbone 的 L3", bm["L3"], 0.537)
+        chk("表V", "换 backbone 的会话项", bm["L1"] - bm["L2"], 0.156)
+        chk("表V", "换 backbone 的试件项", bm["L2"] - bm["L3"], 0.189)
+        chk("表V", "两个 backbone 的总乐观量之差",
+            (m["L1"] - m["L3"]) - (bm["L1"] - bm["L3"]), 0.040, tol=0.001)
     # 正文:十 seed 的留出集覆盖 15/21 只试件(5/6 healthy、4/6 IR、6/9 OR)
     cov_p = os.path.join(HERE, "results_pb", "pb_split_coverage.json")
     if os.path.exists(cov_p):

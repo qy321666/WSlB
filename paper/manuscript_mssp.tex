@@ -630,8 +630,8 @@ not appear here. We train one model per seed on five bearings per class and
 evaluate it twice: on held-out windows drawn from the \emph{same} bearings
 ($30\%$ of the training recordings), and on one bearing per class that the model
 has never seen. Both test sets are class-balanced and the metric is macro-F1.
-The two rows below are the two endpoints of
-Table~\ref{tab:pb_levels}, and are taken from that same run.
+They are the two endpoints that
+Table~\ref{tab:pb_levels} separates, from that same run.
 
 \begin{table}[t]
 \centering
@@ -663,9 +663,8 @@ case. Same-recording evaluation is not a quirk of one benchmark; it is a
 consequence of drawing support and test windows from one recording, and it
 reproduces wherever a benchmark is organized as a small number of long
 recordings. We also note that under a bearing-disjoint protocol the features do
-retain \emph{some} transferable signal ($0.505$ against $0.333$ chance) --- the
-point is not that the task is unlearnable, but that the optimism accounts for
-more than two thirds of the performance above chance
+retain \emph{some} transferable signal ($0.505$ against $0.333$ chance), although
+the optimism accounts for more than two thirds of the performance above chance
 ($0.386$ of $0.558$).
 
 The spread is larger here than on CWRU, and one of the ten runs deserves a
@@ -673,18 +672,15 @@ comment. Seed~6 failed to converge: its macro-F1 on the \emph{training} set is
 $0.60$ where the other nine reach $0.98$--$1.00$, and all three of its test
 scores are correspondingly low. Re-running the identical configuration
 converged ($1.00$ on the training set, $L1 = 0.927$), so this is a transient
-optimization failure rather than a property of the split. We report it in the
-table instead of replacing it, because the contrast we measure is
-\emph{within} a run --- the same model evaluated on three test sets --- and that
-run's optimism, $+0.12$, is within the range of the other nine
-($+0.13$ to $+0.66$). Discarding it would have raised the same-recording mean
+optimization failure rather than a property of the split. We report it rather than
+replace it: the contrast is measured \emph{within} a run, and its optimism,
+$+0.12$, lies within the range of the other nine ($+0.13$ to $+0.66$). Discarding it would have raised the same-recording mean
 from $0.891$ to $0.931$.
 
 \subsection{The optimism decomposes into a session term and a specimen term}
 
-The two endpoints above leave one thing unexplained, and it is the thing that
-matters most for the interpretation: between them, \emph{two} factors change at
-once. The bearing-disjoint test set is a different recording session \emph{and}
+The two endpoints above leave the decisive question open: between them,
+\emph{two} factors change at once. The bearing-disjoint test set is a different recording session \emph{and}
 a different physical bearing. CWRU cannot separate them, because each class is a
 single specimen. Paderborn can, because each of the numbered bearings was
 measured $20$ times under the same condition: a model can be trained on files 1--4 of a
@@ -737,8 +733,8 @@ Two qualifications belong here. First, the specimen term is far more variable
 than the session term: dropping it has a standard deviation of $0.209$ against
 $0.046$ for the session drop, and one of ten seeds (seed~3, $L3 = 0.77$) even
 reverses the sign. Which bearing is held out matters more than which session it
-was measured in, which is what one expects if the specimen term is carried by
-that bearing's individual spectral signature. The ten splits between them draw on
+was measured in, as expected if the specimen term is carried by that
+bearing's individual spectral signature. The ten splits between them draw on
 $15$ of the $21$ bearings (five of the six healthy, four of the six inner-ring
 and six of the nine outer-ring), so what varies across seeds is a property of
 specimens in general rather than one unlucky draw.
@@ -749,16 +745,18 @@ survive the change of specimen. Neither term rests on a handful of runs: over
 the ten seeds the session term is positive in all ten and the specimen term in
 nine, a two-sided sign test giving $p = 0.002$ and $p = 0.021$ without any
 normality assumption, and the $95\%$ confidence intervals for the two means are
-$+0.128$ to $+0.193$ and $+0.076$ to $+0.374$.
+$+0.128$ to $+0.193$ and $+0.076$ to $+0.374$. Nor is the decomposition a property of this one network: a ResNet
+with a quarter of the parameters ($30\,099$ against $118\,368$) and the same
+recipe gives $L1 = 0.883$, $L2 = 0.727$, $L3 = 0.537$ --- session $+0.156$,
+specimen $+0.189$, the same ordering and the same total to within $0.04$.
 
 \subsection{The decomposition is not carried by the rig tone}
 \label{sec:pb_filter}
 
 The $100$\,Hz line of Section~\ref{sec:diag2} is a property of the test rig
 rather than of any bearing, so it cannot encode a specimen's identity. A reader
-may nevertheless object that it is nearly all the classifier sees, and hence
-that the decomposition above measures nothing but the recovery of that one
-line. We test this by removing the line before training and repeating the whole
+may object that it is nearly all the classifier sees, so the decomposition
+measures little but the recovery of that one line. We test this by removing the line before training and repeating the whole
 decomposition with the same splits, seeds and schedule. Two filters are used: a
 notch at $100$\,Hz and its first twenty harmonics, $\pm2$ bins each, which
 discards $93.3\%$ of the total spectral energy, and the $2$\,kHz high-pass of
@@ -800,9 +798,7 @@ and does not remove the decline.
 (b)~The two terms and their sum, bars are means over ten seeds. Filtering
 reduces the session term from $0.161$ to $0.127$ and $0.132$, roughly a fifth,
 and leaves the specimen term without a consistent direction ($0.225$ to $0.195$
-and $0.226$). The total therefore stays in $0.32$--$0.36$: same-recording
-evaluation remains optimistic in a form that filtering the input does not
-remove.}
+and $0.226$), so the total stays in $0.32$--$0.36$.}
 \label{fig:pb_levels}
 \end{figure}
 
@@ -1159,7 +1155,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.6})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.7})
 and are also provided as supplementary material to this
 submission.
 
