@@ -241,7 +241,7 @@ def estimate_fp(X_sup, y_sup, n_class, window, smooth=5):
 
 
 def part_d(root, max_files=4, k=5, n_syn=200, epochs=200, n_seed=5, stride=STRIDE,
-           window=WINDOW, sr=64000):
+           window=WINDOW, sr=64000, suffix=""):
     """孪生迁移:类别 = IR/OR/HEALTHY,正是孪生会建模的运动学。"""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     lab, _ = loc_labeler(root)
@@ -287,19 +287,28 @@ def part_d(root, max_files=4, k=5, n_syn=200, epochs=200, n_seed=5, stride=STRID
         print(f"    {nm:<24}{v.mean():>14.4f} ± {v.std():.4f}")
     os.makedirs(RES, exist_ok=True)
     json.dump({nm: list(map(float, rows[nm])) for nm in names},
-              open(os.path.join(RES, f"d_twin_k{k}.json"), "w"), indent=1)
+              open(os.path.join(RES, f"d_twin_k{k}{suffix}.json"), "w"), indent=1)
 
 
 def main():
-    todo = (sys.argv[1] if len(sys.argv) > 1 else "a").lower()
-    max_files = int(sys.argv[2]) if len(sys.argv) > 2 else 4
+    pos = [a for a in sys.argv[1:] if not a.startswith("--")]
+    opt = {a.split("=", 1)[0].lstrip("-"): a.split("=", 1)[1]
+           for a in sys.argv[1:] if a.startswith("--") and "=" in a}
+    todo = (pos[0] if pos else "a").lower()
+    max_files = int(pos[1]) if len(pos) > 1 else 4
     os.makedirs(RES, exist_ok=True)
     if todo in ("a", "all"):
         part_a(ROOT, max_files)
     if "b" in todo or todo == "all":
         part_bc(ROOT, max_files)
     if "d" in todo or todo == "all":
-        part_d(ROOT, max_files)
+        # --k=5,20,50 可一次跑多个预算;--seeds 指定每格的 seed 数;
+        # --suffix 防止新跑覆盖已入稿的产物(确认后再替换为正式文件名)。
+        ks = [int(x) for x in opt.get("k", "5").split(",")]
+        n_seed = int(opt.get("seeds", 5))
+        suffix = opt.get("suffix", "")
+        for k in ks:
+            part_d(ROOT, max_files, k=k, n_seed=n_seed, suffix=suffix)
 
 
 if __name__ == "__main__":

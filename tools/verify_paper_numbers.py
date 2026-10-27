@@ -31,6 +31,7 @@ import csv
 import glob
 import itertools
 import json
+import math
 import os
 import sys
 
@@ -228,28 +229,66 @@ def rig_tone():
 
 
 # ------------------------------------------------------- 表 VII：Paderborn 无源少样本
+def _sign_p(dd):
+    """双侧精确符号检验,忽略差值为 0 的配对。"""
+    n = int(np.sum(dd != 0))
+    if n == 0:
+        return 1.0
+    w = int(np.sum(dd > 0))
+    tail = sum(math.comb(n, i) for i in range(max(w, n - w), n + 1))
+    return min(1.0, 2.0 * tail / 2 ** n)
+
+
 def table_pb_fewshot():
     """表 VII 由 tools/probe_paderborn.py 的 part_d 产出,落盘 results_pb/d_twin_k*.json。
 
-    与其它训练表不同,这里**有**落盘产物,所以可以直接核对(而不是只能凭记忆)。
-    待核对项里数这张最险 —— 抽查时确实抓到一处:
-    k=50 的"指纹标定(无物理)"0.16846 曾被写成 0.169(应为 0.168),
-    且题注原写"three seeds",而 k=5 那一行实为 5 个 seed。
+    2026-10-27:原来 k=5 只有 5 个 seed、k=20/50 各 3 个,正文据此声称
+    "加物理在小样本上把分数抬回来"。扩到 10 seed 后该差在 k=20 缩到 +0.012、
+    在 k=50 变号(-0.004),三个预算都不显著 —— 3 seed 的增广行系统性偏乐观。
+    现在三个 k 都是 10 seed;旧的 5/3-seed 产物留档为 *_n5legacy / *_n3legacy。
+    除均值外还核对 ±(总体标准差)与正文里的配对符号检验数字。
     """
     print("\n表 VII  tab:pb_fewshot  —— Paderborn 无源少样本(results_pb/d_twin_k*.json)")
     cols = ["真实支撑集(仅 k 个/类)", "纯孪生(无标定)", "指纹标定(无物理)", "指纹标定+物理"]
-    claim = {5: (0.286, 0.166, 0.203, 0.199),
-             20: (0.316, 0.172, 0.177, 0.266),
-             50: (0.325, 0.166, 0.168, 0.231)}
+    claim = {5: (0.312, 0.166, 0.184, 0.220),
+             20: (0.348, 0.166, 0.177, 0.189),
+             50: (0.321, 0.166, 0.189, 0.185)}
+    claim_sd = {5: (0.042, 0.001, 0.029, 0.080),
+                20: (0.084, 0.001, 0.020, 0.028),
+                50: (0.124, 0.001, 0.034, 0.045)}
+    data = {}
     for k in (5, 20, 50):
         path = os.path.join(HERE, "results_pb", f"d_twin_k{k}.json")
         if not os.path.exists(path):
             chk("表VII", f"k={k} 落盘文件", np.nan, 0.0)
             continue
         d = json.load(open(path))
-        for col, ref in zip(cols, claim[k]):
+        data[k] = d
+        for col, ref, ref_sd in zip(cols, claim[k], claim_sd[k]):
             v = d[col]
-            chk("表VII", f"k={k:<2} {col} (n={len(v)})", float(np.mean(v)), ref, tol=0.0005)
+            chk("表VII", f"k={k:<2} {col} 均值 (n={len(v)})", float(np.mean(v)), ref,
+                tol=0.0005)
+            # 表外的 ± 只印到三位小数,末位半个单位(0.0005)正好落在容差边界上
+            # (0.1235 对 0.124),故给到 0.0006。
+            chk("表VII", f"k={k:<2} {col} 标准差", float(np.std(v)), ref_sd, tol=0.0006)
+
+    # 正文:真实支撑集逐 seed 胜过纯孪生的次数与符号检验 p
+    for k, wins_ref, p_ref in ((5, 10, 0.002), (20, 10, 0.002), (50, 9, 0.021)):
+        dd = np.array(data[k][cols[0]]) - np.array(data[k][cols[1]])
+        chk("表VII", f"k={k:<2} 真实支撑>纯孪生 的 seed 数", float(np.sum(dd > 0)),
+            float(wins_ref), tol=0.0)
+        chk("表VII", f"k={k:<2} 该比较的符号检验 p", _sign_p(dd), p_ref, tol=0.001)
+
+    # 正文:指纹+物理 − 指纹 的配对均值差、为正的 seed 数、p("不显著"的依据)
+    for k, d_ref, wins_ref, p_ref in ((5, 0.036, 7, 0.344),
+                                      (20, 0.012, 6, 0.754),
+                                      (50, -0.004, 4, 0.754)):
+        dd = np.array(data[k][cols[3]]) - np.array(data[k][cols[2]])
+        chk("表VII", f"k={k:<2} 指纹+物理−指纹 配对均值差", float(dd.mean()), d_ref,
+            tol=0.0005)
+        chk("表VII", f"k={k:<2} 该差为正的 seed 数", float(np.sum(dd > 0)),
+            float(wins_ref), tol=0.0)
+        chk("表VII", f"k={k:<2} 该差的符号检验 p", _sign_p(dd), p_ref, tol=0.001)
 
 
 # ------------------------------------------------------- 表 I：只训合成域的迁移

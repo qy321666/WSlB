@@ -53,7 +53,7 @@ That Reveals It}
 
 \begin{abstract}
 Physics-based simulation, notably ``digital twin'' generators, is a
-popular source of synthetic fault samples for cross-domain bearing fault
+popular source of synthetic samples for cross-domain bearing
 diagnosis when labeled target data are scarce. On the standard CWRU 12\,kHz
 drive-end benchmark it is \emph{structurally} unable to supply
 class information. Every ``fault type $\times$ load'' cell is a \emph{single
@@ -67,15 +67,16 @@ produces nine classes with near-identical
 spectra and, trained on twin data alone, reaches macro-F1 $0.123$ (chance
 $0.10$). The standard few-shot protocol compounds this:
 support and test windows share the fingerprint, so cross-recording evaluation
-lowers reported macro-F1 by $0.15$--$0.19$ (up to $0.31$) and leaves
-augmentation at the level of the trivial baseline. Coloring white noise with
+lowers macro-F1 by $0.15$--$0.19$ (up to $0.31$) and leaves
+augmentation at the trivial baseline. Coloring white noise with
 the target envelope is the most robust augmentation for an atypical target
 recording; adding a physical impulse train degrades fidelity and
 accuracy. On Paderborn, where several bearings share each class, class-mean
 spectra remain indistinguishable (cosine $1.000$) although classes are defined
 by damage location; there same-recording optimism of $+0.386$ splits
-into session ($+0.161$) and specimen ($+0.225$) terms. The advantage of
-fingerprint calibration over raw physics inverts between the benchmarks.
+into session ($+0.161$) and specimen ($+0.225$) terms. The physical component
+costs $0.26$ macro-F1 on CWRU and nothing detectable where the labels follow the
+fault kinematics.
 \end{abstract}
 
 \begin{keyword}
@@ -161,10 +162,10 @@ times, that optimism can be split by re-evaluating on a different
 \emph{recording of the same bearings}, which gives $+0.161$ for the session
 and a further $+0.225$ for the change of specimen, and it survives removal of
 the rig tone that holds $93\%$ of the spectral energy ($+0.321$ remains). A twin whose physics
-exactly matches the class definition is still the worst augmentation tried. The
-advantage of fingerprint calibration over raw physics inverts between CWRU and
-Paderborn in the direction the mechanism predicts, which serves as a positive
-control (Section~\ref{sec:paderborn}).
+exactly matches the class definition is still the worst augmentation tried, and
+the physical component that costs $0.26$ macro-F1 on CWRU does no detectable
+harm here --- the asymmetry the mechanism predicts
+(Section~\ref{sec:paderborn}).
 \end{itemize}
 
 \section{Related Work}
@@ -231,8 +232,10 @@ transfer --- a source-only model reaches $100\%$ accuracy in all twelve
 transfer directions --- so we adopt a ten-class taxonomy:
 $\{\textsc{Normal}\} \cup \{B,IR,OR\} \times \{0.007'', 0.014'', 0.021''\}$,
 using the official files for the four loads $\{0,1,2,3\}$
-($1730$--$1797$\,rpm). Windows of $1024$ samples with stride $512$ are
-$z$-scored individually.\footnote{Every spectral scalar reported in this paper
+($1730$--$1797$\,rpm). The ten classes are the dataset's own fault-size labels
+(three sizes for each of ball, inner and outer race); the finer taxonomy is the
+one in which the methods still differ, since the four-class one saturates.
+Windows of $1024$ samples with stride $512$ are $z$-scored individually.\footnote{Every spectral scalar reported in this paper
 is reproduced from the raw data by one script released with the code
 (\texttt{tools/probe\_spectral\_numbers.py}), and every table entry by
 \texttt{tools/verify\_paper\_numbers.py}.}
@@ -279,7 +282,17 @@ bandwidth per defect size, the background-noise colouring, and the
 impulse-to-harmonic power ratio were all fitted so that synthetic
 band-energy shares match measured ones. In particular the synthetic peak
 envelope spectrum lands on the correct BPFO, so the twin reproduces the fault
-kinematics that the benchmark labels describe.
+kinematics that the benchmark labels describe. Resonance frequency,
+impulse-to-background ratio, and harmonic amplitudes and phases are redrawn for
+every synthetic window, and the impulse times carry random jitter, so the
+generator used here is a distribution of twins rather than one tuned point in
+its parameter space.
+
+The generator enters the model the way the cited works use theirs: as the
+labeled source of a domain-adversarial configuration adapted to the target load
+(\ml{dt\_dann}, Table~\ref{tab:main}). The failure diagnosed below therefore
+belongs to that template, a simulated source aligned adversarially with the
+target, and not to a particular implementation of it.
 
 \subsection{Twin data are a different domain, and carry no class information}
 Training only on twin data and testing on the real target load
@@ -290,6 +303,20 @@ the rest of the paper is about: the target-calibrated envelope reaches $0.910$,
 and every attempt to put physical structure back on top of it \emph{lowers}
 the score.
 
+\paragraph{What moves the score}
+Table~\ref{tab:synth} separates two ways of improving a synthetic source:
+greater fidelity to the physics, and more information about the target.
+Relative to the twin alone ($0.123$), a measured source-domain envelope reaches
+$0.587$ with white-noise excitation and $0.491$ with the impulse train, so
+adding physics lowers it. Replacing the source envelope with the \emph{target}
+envelope gives $0.651$ with the impulse train and $0.910$ with white noise.
+These two generators are oracles --- their input is the class-conditional
+envelope of the target recording, which no simulator can compute without target
+data --- and even they do better without physics. What the score responds to is
+how much of the target recording the generator is given, not how faithful its
+physics is: a more accurate impulse model moves the twin toward the measured
+source envelope ($0.587$), not toward the target-envelope value ($0.910$).
+
 \begin{table}[t]
 \centering
 \caption{Training only on a synthetic source, testing on the real target load
@@ -297,7 +324,10 @@ the score.
 configuration repeated twice --- and the $\pm$ is the standard deviation over
 those $20$ runs. ``Disc.''\ is a domain discriminator
 trained on backbone features to separate the synthetic source from real target
-data ($0.5$ = indistinguishable). The two
+data ($0.5$ = indistinguishable). Every synthetic set is drawn with a
+randomized resonance frequency ($2850$--$3550$\,Hz), impulse power and harmonic
+amplitudes and phases, and with jittered impulse timing, so each row averages
+over generator parameters as well as seeds. The two
 repetitions of the target-fingerprint row differ by $0.033$ in the mean of ten
 seeds, and a single ten-seed draw would understate that row's spread by a
 factor of two.}
@@ -808,8 +838,8 @@ evaluating on held-out bearings.
 \centering
 \caption{No-source few-shot augmentation on Paderborn, classes defined by damage
 location (healthy / inner ring / outer ring), bearing-disjoint test, macro-F1.
-Chance is $0.333$. Five seeds at $k=5$, three at $k=20$ and $k=50$. The last
-column is the same setting as
+Chance is $0.333$. Ten seeds at each $k$; $\pm$ is the standard deviation over
+seeds. The last column is the same setting as
 Table~\ref{tab:fewshot} except that the class labels are, on this benchmark,
 consistent with the fault kinematics.}
 \label{tab:pb_fewshot}
@@ -819,45 +849,48 @@ consistent with the fault kinematics.}
 \toprule
 $k$ (windows/class) & Real support & Pure twin & Fingerprint & $+$ physics \\
 \midrule
-$5$  & $0.286$ & $0.166$ & $0.203$ & $0.199$ \\
-$20$ & $0.316$ & $0.172$ & $0.177$ & $0.266$ \\
-$50$ & $0.325$ & $0.166$ & $0.168$ & $0.231$ \\
+$5$  & $0.312 \pm 0.042$ & $0.166 \pm 0.001$ & $0.184 \pm 0.029$ & $0.220 \pm 0.080$ \\
+$20$ & $0.348 \pm 0.084$ & $0.166 \pm 0.001$ & $0.177 \pm 0.020$ & $0.189 \pm 0.028$ \\
+$50$ & $0.321 \pm 0.124$ & $0.166 \pm 0.001$ & $0.189 \pm 0.034$ & $0.185 \pm 0.045$ \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-Three things are true in every row. Nothing beats simply training on the real
-labeled samples. The pure twin is the \emph{worst} entry, below the chance level
-of $0.333$, even though its physics matches the class definition exactly. And the
-real-sample baseline does not improve with $k$ --- $0.286$ at five samples per
-class, $0.325$ at fifty --- so the ceiling here is set by the bearing-disjoint
-protocol, not by sample count. Within the augmentation columns the ordering is
-stable too: layering the impulse train onto the target envelope is the highest
-augmentation at $k=20$ ($0.266$ against $0.177$) and at $k=50$ ($0.231$ against
-$0.168$), and is level with the envelope alone at $k=5$ ($0.199$ against
-$0.203$). Both of those exceed the pure twin in all three rows.
+Three things hold in every row. Training on the real labeled samples is the
+highest entry, beating the pure twin in ten of ten, ten of ten and nine of ten
+seeds (sign test $p=0.002$, $0.002$, $0.021$). The pure twin is the lowest, at
+$0.166$ regardless of budget, even though its physics matches the class
+definition exactly. And the real-sample baseline does not improve systematically
+with $k$ --- $0.312$, $0.348$ and $0.321$ at the three budgets --- so the
+ceiling is set by the bearing-disjoint split rather than by sample count; its
+standard deviation grows from $0.042$ to $0.124$ because the identity of the
+held-out bearing dominates the score.
 
-The table cannot rank methods: every entry is at or below chance, and the
-differences between the augmentation columns lie within one standard deviation.
-We report it for the one comparison that is stable across all three values of
-$k$, and that is externally corroborated.
+The two envelope-based variants sit between those ends. Adding the impulse
+train to the target envelope moves the mean by $+0.036$, $+0.012$ and $-0.004$
+at the three budgets (positive in $7$, $6$ and $4$ of ten paired seeds;
+$p\ge 0.34$), so this benchmark does not resolve whether the physical component
+helps. No augmentation entry averages at chance ($0.333$). The table therefore
+supports a single ordering: in every row the pure twin is below both
+envelope-based variants, and nothing approaches training on the real labeled
+samples.
 
-\paragraph{A positive control for the mechanism}
+\paragraph{Where the physics stops hurting}
 On CWRU, fingerprint calibration was the best augmentation and layering physics
-on it consistently hurt. On Paderborn the ranking inverts: fingerprint
-calibration alone is indistinguishable from the raw twin, and adding the
-physical impulse train is what recovers the ground it lost. This is exactly
-what the mechanism predicts. On CWRU the class information \emph{is} the
-fingerprint, so estimating the fingerprint captures the label and physics is
-redundant noise. On Paderborn we measured that the class-mean fingerprints are
-identical across classes (margin $+0.003$, Table~\ref{tab:bench}); calibrating
-to them therefore transfers no label information, and the only thing left
-carrying the label is the impulse repetition rate --- the physics. The failure
-we diagnose therefore lies in applying physics-based augmentation to a benchmark
-whose class labels are bound to individual recordings.
+on it consistently hurt. On Paderborn the same physical component does no
+detectable harm and may do a little good, though the difference is not resolved
+at this sample size. That asymmetry is what the mechanism predicts. On CWRU the
+class information \emph{is} the fingerprint, so estimating the fingerprint
+captures the label and physics is redundant noise. On Paderborn we measured
+that the class-mean fingerprints are identical across classes (margin $+0.003$,
+Table~\ref{tab:bench}); calibrating to them therefore transfers no label
+information, and the only thing left that could carry the label is the impulse
+repetition rate --- the physics. The failure we diagnose therefore lies in
+applying physics-based augmentation to a benchmark whose class labels are bound
+to individual recordings.
 
-\section{Method: Target-Domain Spectral Envelope Calibration}
+\section{A Constructive Baseline: Target-Domain Envelope Calibration}
 \label{sec:method}
 
 Let $\{(\mathbf{x}_i,y_i)\}_{i=1}^{kC}$ be the labeled target support set for
@@ -1005,10 +1038,11 @@ methodology.
 
 This also reframes what the field should take from negative results. The
 failure we diagnose is a property of the \emph{pairing} of a generator with a
-benchmark, not of the generator. The same twin that is worthless on CWRU is, on
-Paderborn, no longer the worst entry once its impulse train is layered onto the
-target spectral envelope (Table~\ref{tab:pb_fewshot}): that is the only setting
-in which we observe the physical component adding anything, and it is what the
+benchmark, not of the generator. The physical component that costs $0.26$
+macro-F1 on CWRU does no detectable harm once its impulse train is layered onto
+the target spectral envelope on Paderborn
+(Table~\ref{tab:pb_fewshot}): that is the only setting in which it is not
+harmful, and it is what the
 mechanism predicts, since there the fingerprint carries no label and the only
 remaining carrier of the label is the impulse repetition rate. The pure twin
 remains the worst augmentation on \emph{both} benchmarks, and on neither does
@@ -1088,15 +1122,20 @@ separate the two terms of Section~\ref{sec:paderborn}. There the separation
 relies on $20$ repeated measurements per bearing, so it measures the session
 term under one rig's repeat-measurement protocol and may not transfer to
 datasets whose repeated recordings differ by more than a re-mount. (iii) Our
-constructive method
+constructive baseline
 is a regularizer rather than a uniform improvement, and we report it as such.
 (iv) In the Paderborn subset we downloaded, every artificial-damage bearing is
 outer-ring and every run-to-failure bearing is inner-ring, so damage location
 and damage origin are confounded; our spectral claim is an \emph{absence} of
 class structure and is unaffected, but it does not support a separate statement
-about outer versus inner race. (v) The Paderborn few-shot entries all lie at or
-below chance, so that table ranks nothing; we use it only for the two
-comparisons that are stable across all three sample budgets. (vi) The spectral
+about outer versus inner race. (v) No Paderborn few-shot augmentation entry
+reaches chance, and the real-sample baseline barely exceeds it, so that table
+ranks little: with one held-out bearing per class the score is dominated by
+which bearing is held out (standard deviation up to $0.12$ over seeds). We use
+it only for the ordering that is stable across all three budgets --- the pure
+twin below both envelope-based variants, and the real samples above them ---
+and we do not read the small differences between the two envelope-based
+variants as an effect. (vi) The spectral
 comparison for Paderborn uses one operating condition and 21 bearings.
 
 \section{Conclusion}
@@ -1122,14 +1161,15 @@ optimistic, by $+0.386$, of which $+0.161$ is attributable to the recording
 session alone and $+0.225$ to the change of specimen. Removing the rig tone,
 which holds $93\%$ of the spectral energy, leaves $+0.321$, still dominated by
 the specimen term, so the optimism is not an artefact of that line. The
-physical component of the twin becomes useful for the first time once its
-impulse train is layered on the target envelope, the one setting where the
-labels rather than the fingerprints carry the physics --- though the pure twin
+physical component of the twin, which costs $0.26$ macro-F1 on CWRU, does no
+detectable harm on Paderborn, where the labels follow the fault kinematics and
+the fingerprints carry none of them --- though the pure twin
 is still the worst augmentation there, and under cross-recording or
 bearing-disjoint evaluation no augmentation on either benchmark reliably beats
 training on the real labeled support samples. The practical
-recommendation is to validate the benchmark before trusting either the positive
-or the negative result obtained on it.
+recommendation is to validate the benchmark against the six properties of
+Table~\ref{tab:checklist} before trusting either the positive or the negative
+result obtained on it.
 
 % >>> elsarticle-decl BEGIN(转换脚本插入,不是正文)
 \section*{CRediT authorship contribution statement}
@@ -1150,7 +1190,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v1.9})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v2.0})
 and are also provided as supplementary material to this
 submission.
 
