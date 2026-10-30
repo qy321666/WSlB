@@ -290,6 +290,15 @@ def table_pb_fewshot():
             float(wins_ref), tol=0.0)
         chk("表VII", f"k={k:<2} 该差的符号检验 p", _sign_p(dd), p_ref, tol=0.001)
 
+    # 讨论里用这张表讲"3 seed 不可信":k=20 的配对差从旧版 +0.09 缩到 +0.01
+    leg_path = os.path.join(HERE, "results_pb", "d_twin_k20_n3legacy.json")
+    if os.path.exists(leg_path) and 20 in data:
+        leg = json.load(open(leg_path))
+        chk("表VII", "正文 3 seed 时 k=20 的配对差", float(np.mean(leg[cols[3]])
+            - np.mean(leg[cols[2]])), 0.09, tol=0.005)
+        chk("表VII", "正文 10 seed 时 k=20 的配对差", float(np.mean(data[20][cols[3]])
+            - np.mean(data[20][cols[2]])), 0.01, tol=0.005)
+
 
 # ------------------------------------------------------- 表 I：只训合成域的迁移
 def table_synth():
@@ -583,33 +592,57 @@ def table_fewshot():
         print("  [--      ] 尚无落盘产物:先跑 python tools/probe_fewshot.py")
         return
     d = json.load(open(path, encoding="utf-8"))["by_k"]
-    # 正文行名 -> {k: 声称均值};表内一角一格,是 6 次运行(3 seed x 2 遍)的均值。
-    CLAIM = {"support_only": {1: 0.890, 3: 0.970, 5: 0.985},
-             "dt_aug": {1: 0.558, 3: 0.777, 5: 0.885},
-             "fp_rand_aug": {1: 0.977, 3: 0.995, 5: 0.993},
-             "fp_phys_aug": {1: 0.947, 3: 0.983, 5: 0.658},
-             "src_rand_aug": {1: 0.861, 3: 0.945, 5: 0.905},
-             "surrogate": {1: 0.960, 3: 0.993, 5: 0.993},
-             "roll_aug": {1: 0.952, 3: 0.991, 5: 0.994},
-             "true_aug": {1: 1.000, 3: 1.000, 5: 1.000}}
+    # 表内一格是 20 次运行(10 seed x 2 遍)的 mean±SD。
+    CLAIM = {"support_only": {1: (0.841, 0.059), 3: (0.946, 0.045), 5: (0.958, 0.031)},
+             "dt_aug":       {1: (0.528, 0.118), 3: (0.811, 0.144), 5: (0.868, 0.096)},
+             "fp_rand_aug":  {1: (0.918, 0.102), 3: (0.983, 0.026), 5: (0.994, 0.006)},
+             "fp_phys_aug":  {1: (0.927, 0.042), 3: (0.982, 0.016), 5: (0.897, 0.279)},
+             "src_rand_aug": {1: (0.844, 0.213), 3: (0.923, 0.125), 5: (0.979, 0.025)},
+             "surrogate":    {1: (0.955, 0.029), 3: (0.994, 0.008), 5: (0.997, 0.005)},
+             "roll_aug":     {1: (0.964, 0.022), 3: (0.921, 0.206), 5: (0.992, 0.005)},
+             "true_aug":     {1: (1.000, 0.000), 3: (1.000, 0.000), 5: (1.000, 0.000)}}
     for name, per_k in CLAIM.items():
-        for k, ref in per_k.items():
+        for k, (m_ref, s_ref) in per_k.items():
             if str(k) not in d or name not in d[str(k)]:
                 chk("表IX", f"{name:<13} k={k} (缺)", np.nan, 0.0)
                 continue
-            chk("表IX", f"{name:<13} k={k}", d[str(k)][name]["mean"], ref, tol=0.001)
-    if "5" in d and "fp_phys_aug" in d["5"]:
-        r = d["5"]["fp_phys_aug"]
-        chk("表IX", "dagger:k=5 fp+imp 标准差", r["std"], 0.46, tol=0.01)
-        n_bad = sum(1 for v in r["per_run"] if v < 0.30)
-        chk("表IX", "dagger:崩塌次数(6 次中)", n_bad, 2, tol=0.001)
-    # 正文「源域指纹明显差于目标域指纹」一句引的两个 k
-    if "src_rand_aug" in d["1"] and "fp_rand_aug" in d["1"]:
-        chk("表IX", "正文 源指纹 k=1", d["1"]["src_rand_aug"]["mean"], 0.861, tol=0.001)
-        chk("表IX", "正文 源指纹 k=5", d["5"]["src_rand_aug"]["mean"], 0.905, tol=0.001)
-        chk("表IX", "正文 目标指纹 k=1", d["1"]["fp_rand_aug"]["mean"], 0.977, tol=0.001)
-        chk("表IX", "正文 目标指纹 k=5", d["5"]["fp_rand_aug"]["mean"], 0.993, tol=0.001)
-        chk("表IX", "正文 只用支撑集 k=1", d["1"]["support_only"]["mean"], 0.890, tol=0.001)
+            r = d[str(k)][name]
+            chk("表IX", f"{name:<13} k={k} 均值", r["mean"], m_ref, tol=0.001)
+            chk("表IX", f"{name:<13} k={k} 标准差", r["std"], s_ref, tol=0.0015)
+
+    def pair(a, b, k):
+        A = np.array(d[str(k)][a]["per_run"])
+        B = np.array(d[str(k)][b]["per_run"])
+        return A - B
+
+    def n_wins(diff):
+        return int(np.sum(diff > 0))
+
+    # 脚注:两行的双峰崩塌
+    r5p = d["5"]["fp_phys_aug"]["per_run"]
+    chk("表IX", "dagger: k=5 fp+imp 崩塌次数(20 次中)", sum(1 for v in r5p if v < 0.30), 2)
+    chk("表IX", "dagger: k=5 fp+imp 崩塌值下限", min(r5p), 0.014, tol=0.001)
+    r3r = d["3"]["roll_aug"]["per_run"]
+    chk("表IX", "ddagger: k=3 noise-only 崩塌次数(20 次中)", sum(1 for v in r3r if v < 0.50), 2)
+
+    # 正文逐条引用的配对差、胜场与符号检验
+    for k, m_ref, w_ref, p_ref in ((1, 0.077, 17, 0.003), (3, 0.037, 19, 0.0), (5, 0.036, 18, 0.0)):
+        diff = pair("fp_rand_aug", "support_only", k)
+        chk("表IX", f"正文 fp+noise − support k={k}", diff.mean(), m_ref, tol=0.001)
+        chk("表IX", f"正文 fp+noise 胜 support k={k}", n_wins(diff), w_ref, tol=0.001)
+        chk("表IX", f"正文 fp+noise 符号检验 p k={k}", _sign_p(diff), p_ref, tol=2e-3)
+    for k, m_ref in ((1, 0.036), (3, 0.010), (5, 0.003)):
+        chk("表IX", f"正文 surrogate − fp k={k}", pair("surrogate", "fp_rand_aug", k).mean(), m_ref, tol=0.001)
+    for k, m_ref, w_ref in ((1, -0.075, 15), (3, -0.060, 17), (5, -0.015, 15)):
+        diff = pair("src_rand_aug", "fp_rand_aug", k)
+        chk("表IX", f"正文 源指纹 − 目标指纹 k={k}", diff.mean(), m_ref, tol=0.001)
+        chk("表IX", f"正文 目标指纹胜源指纹 k={k}", n_wins(-diff), w_ref, tol=0.001)
+    chk("表IX", "正文 fp+imp − fp k=1", pair("fp_phys_aug", "fp_rand_aug", 1).mean(), 0.009, tol=0.001)
+    chk("表IX", "正文 fp+imp − fp k=3", pair("fp_phys_aug", "fp_rand_aug", 3).mean(), -0.001, tol=0.001)
+    # k=5 去掉崩塌的那个 seed(seed 1,两遍都在)后,物理项差 −0.004
+    keep = np.array([i % 10 != 1 for i in range(20)])
+    chk("表IX", "正文 k=5 fp+imp − fp(去掉 seed 1)",
+        pair("fp_phys_aug", "fp_rand_aug", 5)[keep].mean(), -0.004, tol=0.001)
 
 
 def main():

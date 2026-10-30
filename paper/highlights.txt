@@ -8,4 +8,4 @@ the final period.)
 2. A calibrated twin yields spectrally identical classes; twin-only F1 is 0.123.        [77]
 3. Paderborn split: 0.386 F1 optimism, 0.225 of it from the specimen alone.            [72]
 4. Cross-recording evaluation erases the advantage of every augmentation tested.        [77]
-5. Envelopes from k=5 target labels beat physical synthesis on both benchmarks.         [76]
+5. Target-spectrum augmentation beats physical synthesis at every sample budget.        [77]

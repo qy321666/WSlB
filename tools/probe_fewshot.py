@@ -14,6 +14,7 @@
   + true_aug     : 从**目标域训练集之外**的真实样本中取样(400/类)—— 上界(理想增广源)
 
 用法: python tools/probe_fewshot.py [tgt_load] [src_load] [epochs] [n_seed] [n_repeat]
+      python tools/probe_fewshot.py 3 0 40 10 2 --suffix=_s10   # 10 seed,写到 _s10 文件
 输出: results_paper/tab_fewshot.json(供 tools/verify_paper_numbers.py 逐条核对表 IX)
 
 **n_repeat** 同 probe_fp/probe_leakage:同配置整跑 n_repeat 遍,报告 n_repeat x n_seed
@@ -155,15 +156,22 @@ def result(tgt_load=3, src_load=0, epochs=40, n_seed=3, ks=(1, 3, 5), n_repeat=1
 
 
 def main():
-    tgt_load = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-    src_load = int(sys.argv[2]) if len(sys.argv) > 2 else 0
-    epochs = int(sys.argv[3]) if len(sys.argv) > 3 else 40
-    n_seed = int(sys.argv[4]) if len(sys.argv) > 4 else 3
-    n_repeat = int(sys.argv[5]) if len(sys.argv) > 5 else 1
+    # --suffix=_s10 把产物写到 tab_fewshot_s10.json,避免新跑覆盖已入稿的产物,
+    # 与 tools/probe_paderborn.py 的 --suffix 用法一致(确认后再替换正式文件名)。
+    pos = [a for a in sys.argv[1:] if not a.startswith("--")]
+    opt = {a.split("=", 1)[0].lstrip("-"): a.split("=", 1)[1]
+           for a in sys.argv[1:] if a.startswith("--") and "=" in a}
+    tgt_load = int(pos[0]) if len(pos) > 0 else 3
+    src_load = int(pos[1]) if len(pos) > 1 else 0
+    epochs = int(pos[2]) if len(pos) > 2 else 40
+    n_seed = int(pos[3]) if len(pos) > 3 else 3
+    n_repeat = int(pos[4]) if len(pos) > 4 else 1
+    suffix = opt.get("suffix", "")
     out = result(tgt_load, src_load, epochs, n_seed, n_repeat=n_repeat)
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
-    json.dump(out, open(OUT_JSON, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"[save] {OUT_JSON}")
+    path = OUT_JSON.replace(".json", f"{suffix}.json")
+    json.dump(out, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"[save] {path}")
 
 
 if __name__ == "__main__":

@@ -35,26 +35,26 @@ ORCID: 0009-0003-0143-7204}%
 \maketitle
 
 \begin{abstract}
-Physics-based simulation, notably ``digital twin'' generators, is a
+Physics-based simulation, including digital twins, is a
 popular source of synthetic samples for cross-domain bearing
 diagnosis when labeled target data are scarce. On the standard CWRU 12\,kHz
 drive-end benchmark it is \emph{structurally} unable to supply
 class information. Every ``fault type $\times$ load'' cell is a \emph{single
 recording}, and the class-conditional magnitude spectrum is a stable property
 of it: a class's spectral envelope recurs across the four loads at cosine
-$0.944$, yet is not predictable from fault physics, since a source-domain
-envelope transfers to the target at $0.924$ while one estimated from five
+$0.944$, yet is not predictable from fault physics: a source-domain
+envelope transfers at $0.924$ while one estimated from five
 labeled \emph{target} samples reaches $0.995$. Class identity is thus a
 per-bearing \emph{recording fingerprint}. A calibrated McFadden--Smith twin
-produces nine classes with near-identical
-spectra and, trained on twin data alone, reaches macro-F1 $0.123$ (chance
+produces nine spectrally near-identical
+classes and, trained on twin data alone, reaches macro-F1 $0.123$ (chance
 $0.10$). The standard few-shot protocol compounds this:
 support and test windows share the fingerprint, so cross-recording evaluation
 lowers macro-F1 by $0.15$--$0.19$ (up to $0.31$) and leaves
-augmentation at the trivial baseline. Coloring white noise with
-the target envelope is the most robust augmentation for an atypical target
-recording; adding a physical impulse train degrades fidelity and
-accuracy. On Paderborn, where several bearings share each class, class-mean
+augmentation at the trivial baseline. Without source data, reproducing the
+target recording's spectrum --- with colored noise or a per-sample phase
+surrogate --- beats the labeled support at every budget, while the
+physics twin is worse than no augmentation. On Paderborn, where several bearings share each class, class-mean
 spectra remain indistinguishable (cosine $1.000$) although classes are defined
 by damage location; there same-recording optimism of $+0.386$ splits
 into session ($+0.161$) and specimen ($+0.225$) terms. The physical component
@@ -116,10 +116,14 @@ methods become indistinguishable from training on the labeled support set alone
 (Section~\ref{sec:protocol}). We recommend this control for future work.
 \item \textbf{C4 (constructive).} Estimating the per-class spectral envelope
 from $k$ labeled target samples is accurate ($0.995$ cosine at $k=5$), and
-coloring white noise with it is the most robust augmentation when the target
-recording is atypical. Adding a physical impulse train on top of it
-\emph{degrades} both domain fidelity and accuracy, consistently across
-settings (Sections~\ref{sec:method} and~\ref{sec:results}).
+coloring white noise with it beats training on the support set at every budget
+($+0.077$, $+0.037$, $+0.036$ macro-F1 at $k=1,3,5$; 17--19 of 20 paired runs).
+A per-sample phase surrogate, which keeps each support window's own spectrum
+instead of the class mean, is statistically indistinguishable from it and has
+the higher mean at $k=1$. What an augmentation must reproduce is the target
+recording's spectrum: the physics twin is worse than no augmentation at every
+budget, and adding its impulse train to the envelope never improves the mean
+(Sections~\ref{sec:method} and~\ref{sec:results}).
 \item \textbf{C5 (side finding).} Load~3 of CWRU is an outlier operating
 condition: a label-free model transfers among loads 0--2 at $0.93$--$1.00$ but
 reaches only $0.71$ on load~3, and labeled support from the other loads
@@ -244,6 +248,14 @@ $64$ and $60$ epochs, $200$ for the Paderborn comparisons of
 Section~\ref{sec:paderborn}; synthetic sets are generated with $400$ windows per
 class. One seed controls the few-shot draw, the synthetic sample generation and
 the weight initialisation jointly.
+
+Bitwise reproducibility is not available on this hardware. Enabling the
+deterministic cuDNN path makes a seed fail to converge --- in our check seed~1's
+training-set macro-F1 fell from $1.000$ to $0.52$ --- so it stays off, and
+reproducibility rests on statistics over repeated runs instead. Where a
+comparison is close we repeat the whole configuration:
+Tables~\ref{tab:synth} and~\ref{tab:fewshot} report $20$ runs (ten seeds, two
+repetitions each), and the Paderborn tables report ten seeds.
 
 \section{Diagnosis I: What the Twin Supplies}
 \label{sec:diag1}
@@ -850,8 +862,12 @@ envelope-based variants, and nothing approaches training on the real labeled
 samples.
 
 \paragraph{Where the physics stops hurting}
-On CWRU, fingerprint calibration was the best augmentation and layering physics
-on it consistently hurt. On Paderborn the same physical component does no
+On CWRU the augmentations that reproduce the target recording's spectrum are
+the only ones that beat the support baseline at every budget
+(Table~\ref{tab:fewshot}), and adding the physical impulse train to that
+spectrum changes nothing at $k\le3$; in the synthesis-only regime, where the
+envelope must carry the whole class, the same physics costs $0.26$ macro-F1
+(Table~\ref{tab:synth}). On Paderborn the same physical component does no
 detectable harm and may do a little good, though the difference is not resolved
 at this sample size. That asymmetry is what the mechanism predicts. On CWRU the
 class information \emph{is} the fingerprint, so estimating the fingerprint
@@ -886,7 +902,14 @@ followed by per-window $z$-scoring. We consider two excitations: white noise
 characteristic frequencies recomputed at the \emph{target} shaft speed
 (the \emph{fingerprint$+$physics} variant).
 
-Both variants use only the $k$ labeled support samples; no test window is
+A third synthetic source, the \emph{phase surrogate}, uses the same samples
+without the class mean: each of its $400$ samples per class draws one of the
+$k$ support windows, keeps that window's own magnitude spectrum, replaces the
+phases with independent uniform draws, and inverse-transforms the result. It
+reproduces the recording exactly and the class only through the windows it
+draws from.
+
+All three use only the $k$ labeled support samples; no test window is
 involved. The envelopes are accurate at small $k$: estimated from $k=5$
 samples, the per-class envelope matches one estimated from the entire target
 load at cosine $0.995$ on average ($0.989$ worst class). The corresponding
@@ -951,38 +974,70 @@ removing the fault-harmonic fine structure from the envelope drops it further
 to $0.524$.
 
 In the no-source regime, where only the $k$ labeled target samples are
-available (Table~\ref{tab:fewshot}), the same ordering holds: the twin
-augmentation is harmful at every $k$, whereas spectral augmentation
-helps, and most at $k=1$ ($0.890 \rightarrow 0.977$). Source-domain
-fingerprints, which need no target labels, remain clearly worse than
-target-domain ones at every $k$ ($0.861$/$0.905$ against $0.977$/$0.993$).
+available (Table~\ref{tab:fewshot}), the twin augmentation is worse than no
+augmentation at every budget ($0.528$, $0.811$ and $0.868$ against $0.841$,
+$0.946$ and $0.958$). Spectral
+augmentation helps, most at $k=1$: coloring white noise with the target
+envelope gains $0.077$, $0.037$ and $0.036$ macro-F1 at the three budgets
+(17, 19 and 18 of 20 paired runs; $p\le0.003$). A per-sample phase surrogate,
+which keeps each support window's own spectrum instead of the class mean, is
+statistically indistinguishable from it at every budget ($+0.036$, $+0.010$,
+$+0.003$; $p\ge0.06$) and has the higher mean at $k=1$. Source-domain
+envelopes, which need no target labels, stay below the target ones at every
+budget ($0.844$/$0.923$/$0.979$ against $0.918$/$0.983$/$0.994$; 15, 17 and 15
+of 20 paired runs).
+
+Two features of the table qualify the reading. Adding the impulse train to the
+target envelope changes the mean by at most $0.01$ at $k\le3$ and, at $k=5$,
+only through one seed whose two runs collapse to $0.014$ and $0.112$; apart
+from that seed the $k=5$ difference is $-0.004$. Noise-only augmentation, which
+shifts and adds noise to the support windows and supplies no spectrum, is the
+best non-oracle entry at $k=1$ ($0.964$) but falls to $0.239$ and $0.376$ in
+two of its twenty $k=3$ runs, so its gain is the generic effect of enlarging a
+ten-window training set and is not reliable. The envelope and the surrogate,
+by contrast, never fall below $0.65$ in any run.
+
+At $k=3$ and $k=5$ the ordering follows how faithfully an augmentation
+reproduces the target recording: the phase surrogate, which copies each
+support window's spectrum exactly, is first; the smoothed envelope, which
+keeps the class average, next; the physics twin, which reproduces neither,
+last. At $k=1$ that ordering is broken by the generic effect of enlarging a
+ten-window training set, and noise-only augmentation is competitive. The
+mechanism also says what happens when the recording changes: under
+cross-recording evaluation the surrogate is the \emph{weakest} entry tested
+($0.752$ against $0.834$ for support only, Section~\ref{sec:protocol}).
 
 \begin{table}[t]
 \centering
-\caption{No-source few-shot setting, target load~3, macro-F1. Each cell is $6$
-runs (three seeds, the whole configuration repeated twice).
+\caption{No-source few-shot setting, target load~3, macro-F1. Each cell is
+$\text{mean} \pm \text{SD}$ over $20$ runs (ten seeds, the whole configuration
+repeated twice).
 Augmentations add $400$ samples per class generated from the $k$ labeled
-support samples only.}
+support samples only; the last row draws from the target pool that is neither
+support nor test.}
 \label{tab:fewshot}
-\small
-\begin{tabular}{lccc}
+\footnotesize
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{l@{\hspace{8pt}}ccc}
 \toprule
 Augmentation & $k=1$ & $k=3$ & $k=5$ \\
 \midrule
-none (support only)        & $0.890$ & $0.970$ & $0.985$ \\
-physics twin               & $0.558$ & $0.777$ & $0.885$ \\
-fingerprint $+$ white noise& $0.977$ & $0.995$ & $0.993$ \\
-fingerprint $+$ impulse     & $0.947$ & $0.983$ & $0.658^{\dagger}$ \\
-source fingerprint         & $0.861$ & $0.945$ & $0.905$ \\
-phase surrogate            & $0.960$ & $0.993$ & $0.993$ \\
-noise-only augmentation    & $0.952$ & $0.991$ & $0.994$ \\
-true target samples (bound)& $1.000$ & $1.000$ & $1.000$ \\
+none (support only)        & $0.841{\pm}0.059$ & $0.946{\pm}0.045$ & $0.958{\pm}0.031$ \\
+physics twin               & $0.528{\pm}0.118$ & $0.811{\pm}0.144$ & $0.868{\pm}0.096$ \\
+fingerprint $+$ white noise& $0.918{\pm}0.102$ & $0.983{\pm}0.026$ & $0.994{\pm}0.006$ \\
+fingerprint $+$ physics     & $0.927{\pm}0.042$ & $0.982{\pm}0.016$ & $0.897{\pm}0.279^{\dagger}$ \\
+source fingerprint         & $0.844{\pm}0.213$ & $0.923{\pm}0.125$ & $0.979{\pm}0.025$ \\
+phase surrogate            & $0.955{\pm}0.029$ & $0.994{\pm}0.008$ & $0.997{\pm}0.005$ \\
+noise-only augmentation    & $0.964{\pm}0.022$ & $0.921{\pm}0.206^{\ddagger}$ & $0.992{\pm}0.005$ \\
+true target (bound)& $1.000$ & $1.000$ & $1.000$ \\
 \bottomrule
 \end{tabular}
-\\[2pt]
-\footnotesize $^{\dagger}$ very high variance ($\pm 0.46$): two of six runs
-collapse to $0.014$, well below the $0.10$ chance level. The sample is bimodal
-rather than noisy.
+}
+\par\vspace{2pt}
+\footnotesize $^{\dagger}$ bimodal: one seed collapses in both repetitions, to
+$0.014$ (below the $0.10$ chance level) and $0.112$. $^{\ddagger}$ likewise
+bimodal: two of twenty runs fall to $0.239$ and $0.376$, so the mean understates
+the usual behaviour.
 \end{table}
 
 \section{Discussion and Limitations}
@@ -1013,23 +1068,28 @@ This also reframes what the field should take from negative results. The
 failure we diagnose is a property of the \emph{pairing} of a generator with a
 benchmark, not of the generator. The physical component that costs $0.26$
 macro-F1 on CWRU does no detectable harm once its impulse train is layered onto
-the target spectral envelope on Paderborn
-(Table~\ref{tab:pb_fewshot}): that is the only setting in which it is not
-harmful, and it is what the
-mechanism predicts, since there the fingerprint carries no label and the only
-remaining carrier of the label is the impulse repetition rate. The pure twin
-remains the worst augmentation on \emph{both} benchmarks, and on neither does
-any augmentation reliably beat training on the real labeled support samples.
+the target spectral envelope: on CWRU in the no-source regime it changes the
+mean by $+0.009$ and $-0.001$ at $k=1$ and $k=3$ (Table~\ref{tab:fewshot}), and
+on Paderborn by $+0.036$, $+0.012$ and $-0.004$
+(Table~\ref{tab:pb_fewshot}). The mechanism predicts this: where the envelope
+already carries the fingerprint the physics is redundant, and on Paderborn,
+where the fingerprint carries no label, it is the only candidate carrier, which
+that benchmark cannot resolve into a gain. The pure twin
+remains the worst augmentation on \emph{both} benchmarks, and under
+cross-recording evaluation on CWRU no augmentation reliably beats training on
+the real labeled support samples.
 
 \paragraph{Implications for reported numbers} Two papers reporting the same
 method on CWRU may differ by $0.1$--$0.3$ macro-F1 purely because of how the
 few-shot split was drawn. Future work should state whether support and test
 come from the same recording, and ideally report both. The same control is
 cheap wherever a dataset contains several independent specimens per class: hold
-out specimens, not windows. Our own experience is a case in point. The
-secondary tables in this paper are reported over six, ten or twenty runs rather
-than the conventional three, because repeated execution of \emph{the same command}
-with the same seeds moved a ten-seed mean by up to $0.033$ and made a
+out specimens, not windows. Our own experience is a case in point: three seeds
+put the physical augmentation $0.09$ above the envelope-only baseline on
+Paderborn, and ten seeds reduce the gap to $0.01$ and remove its significance.
+The secondary tables in this paper are reported over six, ten or twenty runs
+rather than the conventional three, because repeated execution of \emph{the same
+command} with the same seeds moved a ten-seed mean by up to $0.033$ and made a
 three-seed standard deviation wrong by more than an order of magnitude. This is
 the same problem that has been documented for reinforcement learning
 \cite{henderson2018matters} and for evaluation budgets generally
@@ -1093,8 +1153,9 @@ separate the two terms of Section~\ref{sec:paderborn}. There the separation
 relies on $20$ repeated measurements per bearing, so it measures the session
 term under one rig's repeat-measurement protocol and may not transfer to
 datasets whose repeated recordings differ by more than a re-mount. (iii) Our
-constructive baseline
-is a regularizer rather than a uniform improvement, and we report it as such.
+constructive baseline is a regularizer under cross-recording evaluation: it
+helps when the support recording is atypical and costs $0.02$--$0.03$ otherwise,
+and the gains of Table~\ref{tab:fewshot} belong to a same-recording split.
 (iv) In the Paderborn subset we downloaded, every artificial-damage bearing is
 outer-ring and every run-to-failure bearing is inner-ring, so damage location
 and damage origin are confounded; our spectral claim is an \emph{absence} of
@@ -1117,10 +1178,11 @@ information is a per-bearing recording fingerprint that physics cannot predict,
 making simulation-based sample supplementation structurally ineffective on
 that benchmark; that the standard few-shot protocol leaks this fingerprint from
 support to test and inflates reported macro-F1 by $0.15$--$0.19$, rising to
-$0.31$ in the hardest direction; and that a compact spectral envelope
-calibration estimated from five labeled samples per class is the most robust
-augmentation available, while adding physical impulse structure on top of it
-consistently hurts.
+$0.31$ in the hardest direction; and that, in the no-source regime,
+augmentations which reproduce the target recording's spectrum --- a class-mean
+envelope or a per-sample phase surrogate --- beat training on the labeled
+support set at every budget, while the physics twin is worse than doing nothing
+and adds nothing on top of the envelope.
 
 A second benchmark tests whether this picture is specific to CWRU. On
 Paderborn, where several independent bearings share each class, class-mean

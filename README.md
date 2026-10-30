@@ -22,7 +22,7 @@ python tools/verify_paper_numbers.py artifacts
 
 Reads every artifact in `results_paper/`, `results_pb/` and `results/final/`, recomputes the
 quantity each table reports, compares it with the value printed in the manuscript, and prints
-one line per check. **252 checks**; exit code 0 means all agree, exit code 1 means a mismatch
+one line per check. **295 checks**; exit code 0 means all agree, exit code 1 means a mismatch
 and the offending rows are printed.
 
 Requirements: Python 3 with numpy and scipy (`requirements.txt`).
@@ -31,7 +31,7 @@ Requirements: Python 3 with numpy and scipy (`requirements.txt`).
 
 ```bash
 python tools/verify_paper_numbers.py raw     # 40 further checks
-python tools/verify_paper_numbers.py all     # all 292
+python tools/verify_paper_numbers.py all     # all 335
 ```
 
 `raw` recomputes the deterministic statistics of Table 2, Table 4, the "Diagnosis II" section
@@ -80,7 +80,7 @@ Two different kinds of claim; they should not be conflated.
 | | how it is verified | checks |
 |---|---|---|
 | Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 40 |
-| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 252 |
+| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 295 |
 
 For the second group the check establishes **manuscript ↔ artifact** agreement, not
 **artifact ↔ fresh run**. Those tables come from training, and this hardware is not run-to-run
@@ -105,7 +105,7 @@ Every numbered table has an on-disk artifact and a computing function in
 | Table 6 `tab:pb_levels` | `results_pb/pb_levels.json`, plus `results_pb/pb_levels_notch.json` and `pb_levels_highpass.json` for the two filtered columns (`pb_levels.log`, `pb_levels_notch.log`, `pb_levels_highpass.log`) | `python tools/probe_pb_levels.py 200 10`; add `--filter=notch` and `--filter=highpass` for the last two columns | `table_pb_levels`, `table_pb_filter` |
 | Table 7 `tab:pb_fewshot` | `results_pb/d_twin_k5.json`, `d_twin_k20.json`, `d_twin_k50.json` (10 seeds each; the superseded 5/3-seed runs are kept as `*_n5legacy`/`*_n3legacy`) | `python tools/probe_paderborn.py d --k=5,20,50 --seeds=10 --suffix=_s10`, then copy the `_s10` files to the names in column 2 | `table_pb_fewshot` |
 | Table 8 `tab:main` | `results/final/*.csv` (7 methods × 5 seeds) | `bash run_s2.sh all` then `python tools/collect_results.py` | `table_main` |
-| Table 9 `tab:fewshot` | `results_paper/tab_fewshot.json` (n_repeat=2 × 3 seeds) | `python tools/probe_fewshot.py 3 0 40 3 2` | `table_fewshot` |
+| Table 9 `tab:fewshot` | `results_paper/tab_fewshot.json` (n_repeat=2 × 10 seeds; the superseded 3-seed run is kept as `tab_fewshot_n6legacy.json`) | `python tools/probe_fewshot.py 3 0 40 10 2 --suffix=_s10`, then copy `tab_fewshot_s10.json` to `tab_fewshot.json` | `table_fewshot` |
 | Fig. 1 `fig:leakage` | `paper/figs/fig_leakage.pdf` | `python tools/make_figures.py` | the same numbers as Table 3 |
 | Fig. 2 `fig:spectra` | `paper/figs/fig_spectra.pdf` | `python tools/make_figures.py` | the same numbers as "Diagnosis II" |
 | Backbone check | `results_pb/pb_levels_smallresnet.json` | `python tools/probe_pb_backbone.py 200 10 --arch=smallresnet` | `table_pb_levels` |
@@ -118,6 +118,10 @@ Notes.
   `d_twin_k5_n5legacy.json`, `d_twin_k20_n3legacy.json` and `d_twin_k50_n3legacy.json`; it is
   not the source of any number in the paper, and its k=20/50 rows are systematically
   optimistic (that is why the table was extended).
+- Table 9's cells each average 20 runs (10 seeds, repeated twice). The earlier 3-seed run
+  used before 2026-10-30 is kept as `results_paper/tab_fewshot_n6legacy.json`; it is not the
+  source of any number in the paper, and its support-only row is optimistic by 0.05 at k=1
+  (seeds 0--2 are an easy draw).
 - Tables 5 and 6 come from one run by construction: the same training set is evaluated against
   three test sets that differ by one factor each, which is what makes the session/specimen
   decomposition meaningful.
