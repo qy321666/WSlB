@@ -992,7 +992,8 @@ target envelope changes the mean by at most $0.01$ at $k\le3$ and, at $k=5$,
 only through one seed whose two runs collapse to $0.014$ and $0.112$; apart
 from that seed the $k=5$ difference is $-0.004$. Noise-only augmentation, which
 shifts and adds noise to the support windows and supplies no spectrum, is the
-best non-oracle entry at $k=1$ ($0.964$) but falls to $0.239$ and $0.376$ in
+best non-oracle entry at $k=1$ by mean ($0.964$; it wins only 11 of 20 paired
+comparisons with the envelope) but falls to $0.239$ and $0.376$ in
 two of its twenty $k=3$ runs, so its gain is the generic effect of enlarging a
 ten-window training set and is not reliable. The envelope and the surrogate,
 by contrast, never fall below $0.65$ in any run.
@@ -1001,7 +1002,8 @@ At $k=3$ and $k=5$ the ordering follows how faithfully an augmentation
 reproduces the target recording: the phase surrogate, which copies each
 support window's spectrum exactly, is first; the smoothed envelope, which
 keeps the class average, next; the physics twin, which reproduces neither,
-last. At $k=1$ that ordering is broken by the generic effect of enlarging a
+last. The surrogate beats noise-only in 16 of 20 paired runs at each of $k=3$
+and $k=5$ ($p=0.012$). At $k=1$ that ordering is broken by the generic effect of enlarging a
 ten-window training set, and noise-only augmentation is competitive. The
 mechanism also says what happens when the recording changes: under
 cross-recording evaluation the surrogate is the \emph{weakest} entry tested

@@ -643,6 +643,14 @@ def table_fewshot():
     keep = np.array([i % 10 != 1 for i in range(20)])
     chk("表IX", "正文 k=5 fp+imp − fp(去掉 seed 1)",
         pair("fp_phys_aug", "fp_rand_aug", 5)[keep].mean(), -0.004, tol=0.001)
+    # k=1 时无信息增广只是均值最高,与包络的配对比较并不显著(11/20)
+    chk("表IX", "正文 k=1 noise-only 胜 envelope 次数",
+        n_wins(pair("roll_aug", "fp_rand_aug", 1)), 11, tol=0.001)
+    # k>=3 时相位代理显著优于无信息增广:两档都是 16/20,p=0.012
+    for k in (3, 5):
+        diff = pair("surrogate", "roll_aug", k)
+        chk("表IX", f"正文 k={k} surrogate 胜 noise-only 次数", n_wins(diff), 16, tol=0.001)
+        chk("表IX", f"正文 k={k} surrogate 对 noise-only 符号检验 p", _sign_p(diff), 0.012, tol=5e-4)
 
 
 def main():
