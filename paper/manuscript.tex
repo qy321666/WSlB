@@ -125,8 +125,9 @@ benchmark.
 \item \textbf{C4 (constructive).} The same mechanism says what an augmentation
 has to supply: the target recording's spectrum, not the fault physics. The
 class envelope is easy to learn from a few labels (cosine $0.995$ at $k=5$),
-and coloring noise with it beats training on the support set at every budget
-($+0.077$, $+0.037$, $+0.036$ macro-F1 at $k=1,3,5$; 17--19 of 20 paired runs).
+and coloring noise with it scores above training on the support set at every
+budget ($+0.077$, $+0.037$, $+0.036$ macro-F1 at $k=1,3,5$; ahead in 7--9 of
+ten seeds).
 A per-sample phase surrogate drops the class average and keeps each support
 window's own spectrum, and it matches the envelope: fidelity to the recording
 is what carries the gain. The physics twin is worse than no augmentation at
@@ -255,7 +256,10 @@ discriminator is used, with Adam at a learning rate of $10^{-3}$, batch size
 $64$ and $60$ epochs, $200$ for the Paderborn comparisons of
 Section~\ref{sec:paderborn}; synthetic sets are generated with $400$ windows per
 class. One seed controls the few-shot draw, the synthetic sample generation and
-the weight initialization jointly.
+the weight initialization jointly. The two repetitions of a seed share
+its split and differ only through non-deterministic execution, so where
+we test a paired difference the seed is the unit and the test is a sign
+test over the ten seed means.
 
 Bitwise reproducibility is not available on this hardware. Enabling the
 deterministic cuDNN path makes a seed fail to converge --- in our check seed~1's
@@ -1001,23 +1005,25 @@ In the no-source regime, where only the $k$ labeled target samples are
 available (Table~\ref{tab:fewshot}), the twin augmentation is worse than no
 augmentation at every budget ($0.528$, $0.811$ and $0.868$ against $0.841$,
 $0.946$ and $0.958$). Spectral
-augmentation helps, most at $k=1$: coloring white noise with the target
-envelope gains $0.077$, $0.037$ and $0.036$ macro-F1 at the three budgets
-(17, 19 and 18 of 20 paired runs; $p\le0.003$). A per-sample phase surrogate,
+augmentation helps: coloring white noise with the target envelope gains
+$0.077$, $0.037$ and $0.036$ macro-F1 at the three budgets, ahead of the
+support baseline in 7, 9 and 9 of ten seeds ($p=0.34$, $0.02$ and $0.02$).
+The gain is largest at $k=1$ but not resolved there, because at that budget
+any augmentation enlarges a ten-window training set. A per-sample phase surrogate,
 which keeps each support window's own spectrum instead of the class mean, is
 statistically indistinguishable from it at every budget ($+0.036$, $+0.010$,
-$+0.003$; $p\ge0.06$) and has the higher mean at $k=1$. Source-domain
+$+0.003$; $p\ge0.11$) and has the higher mean at $k=1$. Source-domain
 envelopes, which need no target labels, stay below the target ones at every
-budget ($0.844$/$0.923$/$0.979$ against $0.918$/$0.983$/$0.994$; 15, 17 and 15
-of 20 paired runs).
+budget ($0.844$/$0.923$/$0.979$ against $0.918$/$0.983$/$0.994$; lower in 8, 8 and 9
+of ten seeds).
 
 Adding the impulse train to the
 target envelope changes the mean by at most $0.01$ at $k\le3$ and, at $k=5$,
 only through one seed whose two runs collapse to $0.014$ and $0.112$; apart
 from that seed the $k=5$ difference is $-0.004$. Noise-only augmentation, which
 shifts and adds noise to the support windows and supplies no spectrum, is the
-best non-oracle entry at $k=1$ by mean ($0.964$; it wins only 11 of 20 paired
-comparisons with the envelope) but falls to $0.239$ and $0.376$ in
+best non-oracle entry at $k=1$ by mean ($0.964$; it is ahead of the envelope
+in only 7 of ten seeds) but falls to $0.239$ and $0.376$ in
 two of its twenty $k=3$ runs, so its gain is the generic effect of enlarging a
 ten-window training set and is not reliable. The envelope and the surrogate,
 by contrast, never fall below $0.65$ in any run.
@@ -1026,8 +1032,9 @@ At $k=3$ and $k=5$ the ordering follows how faithfully an augmentation
 reproduces the target recording: the phase surrogate, which copies each
 support window's spectrum exactly, is first; the smoothed envelope, which
 keeps the class average, next; the physics twin, which reproduces neither,
-last. The surrogate beats noise-only in 16 of 20 paired runs at each of $k=3$
-and $k=5$ ($p=0.012$). At $k=1$ that ordering is broken by the generic effect of enlarging a
+last. The surrogate is ahead of noise-only by $0.072$ and $0.004$ at $k=3$ and
+$k=5$, in 8 of ten seeds at each ($p=0.11$): an ordering by mean, not a
+clear majority of seeds. At $k=1$ that ordering is broken by the generic effect of enlarging a
 ten-window training set, and noise-only augmentation is competitive. The
 same mechanism tells us what happens when the recording changes: under
 cross-recording evaluation the surrogate is the \emph{weakest} entry tested
@@ -1080,9 +1087,10 @@ energy in every bearing whether healthy or damaged. A benchmark suitable for tes
 physics-based augmentation must satisfy both conditions at once: the label must
 have a physical definition, and the recording must actually expose it. Neither
 of the two most-used public datasets does, and establishing this belongs in
-benchmark validation. The CWRU benchmark has already been criticized on related
-grounds \cite{hendriks2022benchmark}; we add a mechanism and a quantitative
-control. The situation is not unique to this field: a model can generalize
+benchmark validation. The CWRU benchmark has already been criticized for leakage across its
+splits \cite{hendriks2022benchmark}; we add a different mechanism --- the
+class label is carried by a single recording --- and measure how much of a
+reported score the split accounts for. The situation is not unique to this field: a model can generalize
 across hospitals while relying on a site-specific confounder invisible in the
 acquisition protocol \cite{zech2018variable}.
 

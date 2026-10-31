@@ -684,6 +684,15 @@ def table_fewshot():
         B = np.array(d[str(k)][b]["per_run"])
         return A - B
 
+    def pair_seed(a, b, k):
+        """按 seed 取两遍均值再配对:两次重复共享划分与 seed,不是两个独立样本。
+
+        正文的符号检验与胜场数都用这个口径。
+        """
+        A = np.array(d[str(k)][a]["per_run"]).reshape(2, -1).mean(0)
+        B = np.array(d[str(k)][b]["per_run"]).reshape(2, -1).mean(0)
+        return A - B
+
     def n_wins(diff):
         return int(np.sum(diff > 0))
 
@@ -694,32 +703,36 @@ def table_fewshot():
     r3r = d["3"]["roll_aug"]["per_run"]
     chk("表IX", "ddagger: k=3 noise-only 崩塌次数(20 次中)", sum(1 for v in r3r if v < 0.50), 2)
 
-    # 正文逐条引用的配对差、胜场与符号检验
-    for k, m_ref, w_ref, p_ref in ((1, 0.077, 17, 0.003), (3, 0.037, 19, 0.0), (5, 0.036, 18, 0.0)):
-        diff = pair("fp_rand_aug", "support_only", k)
+    # 正文逐条引用的配对差、胜场与符号检验(seed 级,见 pair_seed)
+    for k, m_ref, w_ref, p_ref in ((1, 0.077, 7, 0.344), (3, 0.037, 9, 0.021),
+                                   (5, 0.036, 9, 0.021)):
+        diff = pair_seed("fp_rand_aug", "support_only", k)
         chk("表IX", f"正文 fp+noise − support k={k}", diff.mean(), m_ref, tol=0.001)
-        chk("表IX", f"正文 fp+noise 胜 support k={k}", n_wins(diff), w_ref, tol=0.001)
+        chk("表IX", f"正文 fp+noise 胜 support k={k}(seed)", n_wins(diff), w_ref, tol=0.001)
         chk("表IX", f"正文 fp+noise 符号检验 p k={k}", _sign_p(diff), p_ref, tol=2e-3)
     for k, m_ref in ((1, 0.036), (3, 0.010), (5, 0.003)):
-        chk("表IX", f"正文 surrogate − fp k={k}", pair("surrogate", "fp_rand_aug", k).mean(), m_ref, tol=0.001)
-    for k, m_ref, w_ref in ((1, -0.075, 15), (3, -0.060, 17), (5, -0.015, 15)):
-        diff = pair("src_rand_aug", "fp_rand_aug", k)
+        chk("表IX", f"正文 surrogate − fp k={k}",
+            pair_seed("surrogate", "fp_rand_aug", k).mean(), m_ref, tol=0.001)
+    for k, m_ref, w_ref in ((1, -0.075, 8), (3, -0.060, 8), (5, -0.015, 9)):
+        diff = pair_seed("src_rand_aug", "fp_rand_aug", k)
         chk("表IX", f"正文 源指纹 − 目标指纹 k={k}", diff.mean(), m_ref, tol=0.001)
-        chk("表IX", f"正文 目标指纹胜源指纹 k={k}", n_wins(-diff), w_ref, tol=0.001)
-    chk("表IX", "正文 fp+imp − fp k=1", pair("fp_phys_aug", "fp_rand_aug", 1).mean(), 0.009, tol=0.001)
-    chk("表IX", "正文 fp+imp − fp k=3", pair("fp_phys_aug", "fp_rand_aug", 3).mean(), -0.001, tol=0.001)
+        chk("表IX", f"正文 目标指纹胜源指纹 k={k}(seed)", n_wins(-diff), w_ref, tol=0.001)
+    chk("表IX", "正文 fp+imp − fp k=1",
+        pair_seed("fp_phys_aug", "fp_rand_aug", 1).mean(), 0.009, tol=0.001)
+    chk("表IX", "正文 fp+imp − fp k=3",
+        pair_seed("fp_phys_aug", "fp_rand_aug", 3).mean(), -0.001, tol=0.001)
     # k=5 去掉崩塌的那个 seed(seed 1,两遍都在)后,物理项差 −0.004
-    keep = np.array([i % 10 != 1 for i in range(20)])
+    keep = np.array([i != 1 for i in range(10)])
     chk("表IX", "正文 k=5 fp+imp − fp(去掉 seed 1)",
-        pair("fp_phys_aug", "fp_rand_aug", 5)[keep].mean(), -0.004, tol=0.001)
-    # k=1 时无信息增广只是均值最高,与包络的配对比较并不显著(11/20)
-    chk("表IX", "正文 k=1 noise-only 胜 envelope 次数",
-        n_wins(pair("roll_aug", "fp_rand_aug", 1)), 11, tol=0.001)
-    # k>=3 时相位代理显著优于无信息增广:两档都是 16/20,p=0.012
+        pair_seed("fp_phys_aug", "fp_rand_aug", 5)[keep].mean(), -0.004, tol=0.001)
+    # k=1 时无信息增广只是均值最高,与包络的配对比较并不显著(7/10)
+    chk("表IX", "正文 k=1 noise-only 胜 envelope 次数(seed)",
+        n_wins(pair_seed("roll_aug", "fp_rand_aug", 1)), 7, tol=0.001)
+    # k>=3 时相位代理按均值领先无信息增广,但 seed 级只有 8/10(p=0.11)
     for k in (3, 5):
-        diff = pair("surrogate", "roll_aug", k)
-        chk("表IX", f"正文 k={k} surrogate 胜 noise-only 次数", n_wins(diff), 16, tol=0.001)
-        chk("表IX", f"正文 k={k} surrogate 对 noise-only 符号检验 p", _sign_p(diff), 0.012, tol=5e-4)
+        diff = pair_seed("surrogate", "roll_aug", k)
+        chk("表IX", f"正文 k={k} surrogate 胜 noise-only 次数(seed)", n_wins(diff), 8, tol=0.001)
+        chk("表IX", f"正文 k={k} surrogate 对 noise-only 符号检验 p", _sign_p(diff), 0.109, tol=1e-3)
 
 
 def main():
