@@ -33,6 +33,11 @@ CLASSES_10 = ("NORMAL",
               "OR007", "OR014", "OR021")
 CLASS_SETS = {4: CLASSES_4, 10: CLASSES_10}
 
+# 4 类且**每型合并三种尺寸**:正常 / 滚动体 / 内圈 / 外圈各含该型的 007、014、
+# 021 三份录制(正常只有一份)。用来检验"类别 = 录制"是不是十类划分的产物 ——
+# 见 tools/probe_leakage.py --classes=4merge。
+CLASSES_4MERGE = ("NORMAL", "B", "IR", "OR")
+
 
 def parse_class(name, default_size="007"):
     """把类别名解析成 (类型, 尺寸)。
@@ -131,11 +136,13 @@ def _dir_fingerprint(root):
 
 
 def build_cwru_domain(root, load, classes=CLASSES_4,
-                      size="007", window=1024, step=None, cache_dir=None):
+                      size="007", window=1024, step=None, cache_dir=None,
+                      merge_sizes=False):
     """构建 CWRU 某个负载下的完整数据集。
 
     classes 可以写旧 4 类 ("NORMAL","B","IR","OR",尺寸统一由 size 给出),
     也可以写 10 类 ("NORMAL","B007","B014",...,"OR021",尺寸写在类名里)。
+    merge_sizes=True 时,同型的全部尺寸合并为一类(配合 CLASSES_4MERGE 使用)。
     返回 (X, y):X 为 (n, window) float32 已归一化;y 为类别 id,顺序与 classes 一致。
     若 cache_dir 给定则缓存 .npy,缓存键绑定 (load, 类别集合, 数据目录指纹)。
     """
@@ -149,7 +156,9 @@ def build_cwru_domain(root, load, classes=CLASSES_4,
         # 缓存键绑定数据目录指纹 + 类别集合,避免不同数据源(真数据/假数据)、
         # 不同类别切分(4 类/10 类)以及**数据内容本身的改动**互相污染
         root_fp = _dir_fingerprint(root)
-        cls_fp = hashlib.md5((",".join(classes) + "|" + size).encode()).hexdigest()[:8]
+        cls_fp = hashlib.md5(
+            (",".join(classes) + "|" + size + "|" + str(bool(merge_sizes))).encode()
+        ).hexdigest()[:8]
         cache_path = os.path.join(cache_dir, f"cwru_l{load}_{cls_fp}_{root_fp}.npz")
         if os.path.exists(cache_path):
             d = np.load(cache_path)
@@ -161,6 +170,9 @@ def build_cwru_domain(root, load, classes=CLASSES_4,
         typ, sz = parse_class(cls, size)
         if typ == "NORMAL":
             cls_files = [p for p, t, s, l in files if t == "NORMAL" and l == load]
+        elif merge_sizes:
+            # 同型的三种故障尺寸来自不同录制(不同试验轴承),合并成一类
+            cls_files = [p for p, t, s, l in files if t == typ and l == load]
         else:
             cls_files = [p for p, t, s, l in files
                          if t == typ and s == sz and l == load]

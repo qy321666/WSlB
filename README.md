@@ -22,7 +22,7 @@ python tools/verify_paper_numbers.py artifacts
 
 Reads every artifact in `results_paper/`, `results_pb/` and `results/final/`, recomputes the
 quantity each table reports, compares it with the value printed in the manuscript, and prints
-one line per check. **305 checks**; exit code 0 means all agree, exit code 1 means a mismatch
+one line per check. **318 checks**; exit code 0 means all agree, exit code 1 means a mismatch
 and the offending rows are printed.
 
 Requirements: Python 3 with numpy and scipy (`requirements.txt`).
@@ -31,7 +31,7 @@ Requirements: Python 3 with numpy and scipy (`requirements.txt`).
 
 ```bash
 python tools/verify_paper_numbers.py raw     # 40 further checks
-python tools/verify_paper_numbers.py all     # all 345
+python tools/verify_paper_numbers.py all     # all 358
 ```
 
 `raw` recomputes the deterministic statistics of Table 2, Table 4, the "Diagnosis II" section
@@ -80,7 +80,7 @@ Two different kinds of claim; they should not be conflated.
 | | how it is verified | checks |
 |---|---|---|
 | Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 40 |
-| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 305 |
+| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 318 |
 
 For the second group the check establishes **manuscript ↔ artifact** agreement, not
 **artifact ↔ fresh run**. Those tables come from training, and this hardware is not run-to-run
@@ -118,6 +118,10 @@ Notes.
   `d_twin_k5_n5legacy.json`, `d_twin_k20_n3legacy.json` and `d_twin_k50_n3legacy.json`; it is
   not the source of any number in the paper, and its k=20/50 rows are systematically
   optimistic (that is why the table was extended).
+- The taxonomy check in Section V uses `results_paper/tab_leak_c4s10.json` (four
+  classes, three recordings per class, ten seeds) and `results_paper/tab_leak_c4single.json`
+  (four classes at one fault size, ten seeds); each artifact records its command in
+  `provenance`, and both are read by `table_leak_taxonomy` in the verification script.
 - Table 3's cells each average 20 runs (10 seeds, repeated twice). The earlier 6-run
   artifact used before 2026-10-31 is kept as `results_paper/tab_leak_n6legacy.json`; it is not
   the source of any number in the paper. Its load-3 fingerprint row was the outlier that made

@@ -595,6 +595,56 @@ def table_leak():
         chk("表III", "支撑域(load0--2)测 load3 最高", max(into3), 0.798)
 
 
+# ------------------------------------------- 表 III 的类别粒度敏感性（§V 正文）
+def table_leak_taxonomy():
+    """§V「The inflation requires the class to be a single recording」段落。
+
+    产物:
+      results_paper/tab_leak_c4s10.json  —— 4 类,每型合并 007/014/021(10 seeds)
+      results_paper/tab_leak_c4single.json —— 4 类,单一尺寸 007(10 seeds,对照)
+    """
+    print("§V 类别粒度  —— tab_leak_c4s10.json / tab_leak_c4single.json")
+    merged = os.path.join(HERE, "results_paper", "tab_leak_c4s10.json")
+    single = os.path.join(HERE, "results_paper", "tab_leak_c4single.json")
+    if not os.path.exists(merged):
+        print("  [--      ] 尚无 4 类合并产物:python tools/probe_leakage.py "
+              "all 60 10 5 1 --classes=4merge --suffix=_c4s10")
+        return
+    d = json.load(open(merged, encoding="utf-8"))["by_support_load"]
+    so = [d[L]["rows"]["support_only"] for L in "0123"]
+    chk("§V粒度", "合并后 support_only 同录制 均值",
+        float(np.mean([r["same_mean"] for r in so])), 0.874, tol=0.001)
+    chk("§V粒度", "合并后 support_only 跨录制 均值",
+        float(np.mean([r["cross_mean"] for r in so])), 0.854, tol=0.001)
+    chk("§V粒度", "合并后 support_only 乐观量 均值",
+        float(np.mean([r["optimism"] for r in so])), 0.020, tol=0.001)
+    for L, ref in zip("0123", (-0.020, -0.004, 0.015, 0.088)):
+        chk("§V粒度", f"合并后 load{L} 乐观量", float(d[L]["rows"]["support_only"]["optimism"]),
+            ref, tol=0.001)
+    chk("§V粒度", "合并后每格运行数", d["0"]["rows"]["support_only"]["n_runs"], 10)
+    # 十类对照(表 III 的四域均值),正文用来对比 0.152
+    ten = json.load(open(os.path.join(HERE, "results_paper", "tab_leak.json"),
+                         encoding="utf-8"))["by_support_load"]
+    chk("§V粒度", "十类 support_only 乐观量 均值",
+        float(np.mean([ten[L]["rows"]["support_only"]["optimism"] for L in "0123"])),
+        0.152, tol=0.001)
+    chk("§V粒度", "十类 support_only 同录制 均值",
+        float(np.mean([ten[L]["rows"]["support_only"]["same_mean"] for L in "0123"])),
+        0.992, tol=0.001)
+    # 单一尺寸对照:正文只说它两头都在天花板(0.93--1.00)
+    if os.path.exists(single):
+        ds = json.load(open(single, encoding="utf-8"))["by_support_load"]
+        ss = [ds[L]["rows"]["support_only"] for L in "0123"]
+        chk("§V粒度", "单一尺寸 support_only 同录制 最低",
+            min(r["same_mean"] for r in ss), 1.000, tol=0.001)
+        chk("§V粒度", "单一尺寸 support_only 跨录制 最低",
+            min(r["cross_mean"] for r in ss), 0.932, tol=0.001)
+        chk("§V粒度", "单一尺寸 support_only 跨录制 最高",
+            max(r["cross_mean"] for r in ss), 1.000, tol=0.001)
+    else:
+        print("  [--      ] 缺 tab_leak_c4single.json(单一尺寸对照)")
+
+
 # ------------------------------------------------------- 表 IX：CWRU 无源少样本
 def table_fewshot():
     """表 IX 由 tools/probe_fewshot.py 产出 results_paper/tab_fewshot.json。"""
@@ -669,12 +719,13 @@ def main():
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
     runs = {"bench": table_bench, "classsep": table_classsep, "diag2": diag2,
             "rig": rig_tone, "pb_fewshot": table_pb_fewshot, "main": table_main,
-            "pb_levels": table_pb_levels, "leak": table_leak, "fewshot": table_fewshot,
+            "pb_levels": table_pb_levels, "leak": table_leak, "leak_taxo": table_leak_taxonomy,
+            "fewshot": table_fewshot,
             "synth": table_synth, "pb_filter": table_pb_filter}
     # 两组划分的依据是**数据依赖**,不是主题:artifacts 组只读本仓已落盘的 JSON/CSV,
     # 没有原始数据也能跑 —— 补充材料包就是靠这一点做到"审稿人开箱可复核"。
     groups = {"all": tuple(runs),
-              "artifacts": ("synth", "leak", "fewshot", "main", "pb_levels",
+              "artifacts": ("synth", "leak", "leak_taxo", "fewshot", "main", "pb_levels",
                             "pb_filter", "pb_fewshot"),
               "raw": ("bench", "classsep", "diag2", "rig")}
     todo = groups.get(which, tuple(which.split(",")))

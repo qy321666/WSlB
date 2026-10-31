@@ -32,7 +32,8 @@ import torch.nn as nn
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from data_utils import CLASS_SETS, build_cwru_domain, split_target_fewshot  # noqa: E402
+from data_utils import (CLASS_SETS, CLASSES_4, CLASSES_4MERGE,  # noqa: E402
+                        build_cwru_domain, split_target_fewshot)
 from dt_synth import CWRU_FR  # noqa: E402
 from models import build_model, grad_reverse  # noqa: E402
 from train import evaluate, make_loader  # noqa: E402
@@ -118,7 +119,22 @@ def train_dann(X_src, y_src, X_pool, device, n_class, epochs, seed, adversarial=
     return bb, cl
 
 
-def run(tgt_load=3, epochs=60, n_seed=3, k=5, n_repeat=1):
+def taxonomy(name):
+    """返回 (类别名元组, merge_sizes, size)。
+
+    "10"      : 十类,每个"类型 x 尺寸"自成一类 —— 每个负载下每类只有一份录制。
+    "4merge"  : 正常/滚动体/内圈/外圈,每型合并 007/014/021 三份录制。
+    "4single" : 十类里取 007 那一档的 4 类 —— 类别数变少但每类仍只有一份录制。
+                用来把"类别数"与"每类录制数"两个因素分开。
+    """
+    if name in ("4merge", "4"):
+        return CLASSES_4MERGE, True, "007"
+    if name == "4single":
+        return CLASSES_4, False, "007"
+    return CLASS_SETS[10], False, "007"
+
+
+def run(tgt_load=3, epochs=60, n_seed=3, k=5, n_repeat=1, taxo="10"):
     """跑一个支撑域(即 tab:leak 的一行),返回可直接核对的字典。
 
     `same` = 该 load 自己的留出测试窗;`cross` = 另外三个 load 的全部窗。
@@ -129,16 +145,19 @@ def run(tgt_load=3, epochs=60, n_seed=3, k=5, n_repeat=1):
     (实测 3 seed 的 std 到 0.047,且均值两次运行能差 0.05),单次 3 seed 的格子
     不足以支撑 tab:leak 这张论文的关键表。报告的数字取 n_repeat x n_seed 次运行。
     """
-    classes = CLASS_SETS[10]
+    # 类别粒度见 taxonomy():十类 / 4 类合并尺寸 / 4 类单一尺寸(对照)。
+    classes, merge_sizes, size = taxonomy(taxo)
     n_class = len(classes)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     others = [l for l in (0, 1, 2, 3) if l != tgt_load]
 
-    doms = {l: build_cwru_domain("data/cwru", l, classes, window=WINDOW) for l in (0, 1, 2, 3)}
+    doms = {l: build_cwru_domain("data/cwru", l, classes, size=size,
+                                 window=WINDOW, merge_sizes=merge_sizes)
+            for l in (0, 1, 2, 3)}
     X_t, y_t = doms[tgt_load]
     X_s, y_s = doms[SRC_LOAD]
     print(f"目标 load{tgt_load}(fr={CWRU_FR[tgt_load]:.2f}Hz),源 load{SRC_LOAD};"
-          f"k={k},{epochs} epoch,{n_seed} seed x {n_repeat} 遍")
+          f"{n_class} 类,{k}={k} 支撑/类,{epochs} epoch,{n_seed} seed x {n_repeat} 遍")
     print(f"同录制测试 = load{tgt_load} 留出测试窗;跨录制测试 = load{others} 全部窗\n")
 
     y_gen = np.repeat(np.arange(n_class), N_AUG)
@@ -191,6 +210,7 @@ def run(tgt_load=3, epochs=60, n_seed=3, k=5, n_repeat=1):
     print(head)
     print("-" * len(head))
     out = {"config": {"tgt_load": tgt_load, "src_load": SRC_LOAD, "k": k,
+                      "classes": list(classes), "taxonomy": taxo,
                       "epochs": epochs, "n_seed": n_seed, "n_repeat": n_repeat,
                       "n_aug_per_class": N_AUG},
            "rows": {}}
@@ -222,6 +242,9 @@ def main():
     k = int(pos[3]) if len(pos) > 3 else 5
     n_repeat = int(pos[4]) if len(pos) > 4 else 1
     suffix = opt.get("suffix", "")
+    taxo = opt.get("classes", "10")
+    if taxo not in ("10", "4merge", "4", "4single"):
+        raise SystemExit(f"--classes 只认 10 / 4merge / 4single,收到 {taxo!r}")
     out_json = OUT_JSON.replace(".json", f"{suffix}.json")
     loads = (0, 1, 2, 3) if a == "all" else (int(a),)
 
@@ -231,10 +254,11 @@ def main():
     # (旧版只有 merge_runs 会写 provenance,于是"一次跑多遍"的产物反而没有出处。)
     res["provenance"] = (f"python tools/probe_leakage.py {'all' if a == 'all' else a} "
                          f"{epochs} {n_seed} {k} {n_repeat}"
+                         f"{(' --classes=' + taxo) if taxo != '10' else ''}"
                          f"{(' --suffix=' + suffix) if suffix else ''};"
                          f"每格 {n_seed} seed x {n_repeat} 遍 = {n_seed * n_repeat} runs")
     for l in loads:
-        res["by_support_load"][str(l)] = run(l, epochs, n_seed, k, n_repeat)
+        res["by_support_load"][str(l)] = run(l, epochs, n_seed, k, n_repeat, taxo=taxo)
         os.makedirs(os.path.dirname(out_json), exist_ok=True)
         json.dump(res, open(out_json, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print(f"[save] {out_json}  (已含支撑域 {sorted(res['by_support_load'], key=int)})")

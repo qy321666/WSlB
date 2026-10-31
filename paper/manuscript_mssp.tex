@@ -136,7 +136,8 @@ reproduces neither (Section~\ref{sec:diag2}).
 \item \textbf{C3 (protocol).} The few-shot evaluation protocol draws support
 and test windows from the same recording, so both share the fingerprint. Under
 a cross-recording protocol the reported macro-F1 drops by $0.14$--$0.21$
-(average over four support domains; up to $0.29$), and fingerprint
+(average over four support domains; up to $0.29$), falling to $0.02$ when the
+three fault sizes are pooled into one class, and fingerprint
 augmentation ends within $0.015$ of training on the labeled support set alone,
 while the phase surrogate falls $0.06$ behind it
 (Section~\ref{sec:protocol}). We recommend this control for future work.
@@ -492,7 +493,8 @@ Four conclusions follow.
 \paragraph{Same-recording evaluation is optimistic by $0.14$--$0.21$}
 Support-only training scores $0.988$--$0.998$ on its own held-out windows but
 only $0.732$--$0.882$ on other recordings (Fig.~\ref{fig:leak}). Every training
-configuration in the table shows the same gap. A few-shot result on this
+configuration in the table shows the same gap, whose size depends on how the
+classes are defined (paragraph below). A few-shot result on this
 benchmark that uses the standard split contains this optimism unless a
 cross-recording control is reported alongside it.
 
@@ -524,6 +526,22 @@ recording; conversely, labeled support from loads 0--2 transfers into load~3 at
 $0.69$--$0.80$. The widely used S0$\rightarrow$S3 direction is hard mainly
 because load~3 is peculiar; results reported on that direction alone should not
 be generalized.
+
+\paragraph{The inflation requires the class to be a single recording}
+The ten classes are three fault types at three fault sizes, and within a load
+each class is a single recording. Pool the three sizes into one class --- so
+each fault class spans three recordings --- and the same-recording advantage
+largely disappears: support-only training scores $0.874$ on its own held-out
+windows and $0.854$ on the other loads, an optimism of $+0.020$ against
+$+0.152$ for the ten-class taxonomy (ten seeds). Per support load the gap is
+$-0.020$, $-0.004$, $+0.015$ and $+0.088$; only load~3 retains one. The
+cross-recording score is essentially unchanged ($0.854$ against $0.840$); what
+falls is the same-recording score, from $0.992$ to $0.874$. Four classes at a
+single fault size are at ceiling on both evaluations (cross-recording
+$0.93$--$1.00$), so that control is uninformative. The pooled control is the
+one that speaks to the mechanism: once a class spans several recordings, a
+random window split is no longer a same-recording split, and the advantage
+goes with it.
 
 \begin{figure}[htbp]
 \centering
@@ -1159,7 +1177,7 @@ split & CWRU: one bearing per class \\
 Recording independence & Support and test from different recordings; report both
 numbers and the support-only baseline & A random window split of one recording,
 so that using any target label beats training on the support set & CWRU:
-$+0.14$--$0.21$ \\
+$+0.14$--$0.21$ ($+0.02$ with sizes pooled) \\
 Spectral separability & Within- versus between-class mean spectra, in source and
 target & Between-class separation no larger than within-class & Paderborn:
 margin $+0.003$ \\
@@ -1253,7 +1271,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v2.3})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v2.4})
 and are also provided as supplementary material to this
 submission.
 
