@@ -22,7 +22,7 @@ python tools/verify_paper_numbers.py artifacts
 
 Reads every artifact in `results_paper/`, `results_pb/` and `results/final/`, recomputes the
 quantity each table reports, compares it with the value printed in the manuscript, and prints
-one line per check. **318 checks**; exit code 0 means all agree, exit code 1 means a mismatch
+one line per check. **324 checks**; exit code 0 means all agree, exit code 1 means a mismatch
 and the offending rows are printed.
 
 Requirements: Python 3 with numpy and scipy (`requirements.txt`).
@@ -30,7 +30,7 @@ Requirements: Python 3 with numpy and scipy (`requirements.txt`).
 ## 2. The remaining checks need the raw data
 
 ```bash
-python tools/verify_paper_numbers.py raw     # 40 further checks
+python tools/verify_paper_numbers.py raw     # 42 further checks
 python tools/verify_paper_numbers.py all     # all 366
 ```
 
@@ -79,8 +79,8 @@ Two different kinds of claim; they should not be conflated.
 
 | | how it is verified | checks |
 |---|---|---|
-| Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 40 |
-| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 318 |
+| Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 42 |
+| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 324 |
 
 For the second group the check establishes **manuscript ↔ artifact** agreement, not
 **artifact ↔ fresh run**. Those tables come from training, and this hardware is not run-to-run
