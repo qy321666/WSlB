@@ -152,7 +152,7 @@ public, commercial, or not-for-profit sectors.
 \section*{Data availability}
 The CWRU 12\,kHz drive-end and Paderborn KAt datasets analysed here are public.
 The code and the per-table artifacts that reproduce every number in this paper
-are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v2.9})
+are available at \url{https://github.com/qy321666/WSlB} (release \texttt{v2.10})
 and are also provided as supplementary material to this
 submission.
 

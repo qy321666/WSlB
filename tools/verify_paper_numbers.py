@@ -710,6 +710,10 @@ def table_fewshot():
     chk("表IX", "dagger: k=5 fp+imp 崩塌值下限", min(r5p), 0.014, tol=0.001)
     r3r = d["3"]["roll_aug"]["per_run"]
     chk("表IX", "ddagger: k=3 noise-only 崩塌次数(20 次中)", sum(1 for v in r3r if v < 0.50), 2)
+    v3 = sorted(v for v in r3r if v < 0.50)
+    chk("表IX", "ddagger: 两次崩塌的运行值", (v3[0], v3[1]), (0.239, 0.376), tol=0.001)
+    v5 = sorted(v for v in r5p if v < 0.30)
+    chk("表IX", "dagger: 两次崩塌的运行值", (v5[0], v5[1]), (0.014, 0.112), tol=0.001)
 
     # 正文逐条引用的配对差、胜场与符号检验(seed 级,见 pair_seed)
     for k, m_ref, w_ref, p_ref in ((1, 0.077, 7, 0.344), (3, 0.037, 9, 0.021),
