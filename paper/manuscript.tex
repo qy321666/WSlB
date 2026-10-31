@@ -42,7 +42,7 @@ drive-end benchmark it is \emph{structurally} unable to supply
 class information. Every ``fault type $\times$ load'' cell is a \emph{single
 recording}, and the class-conditional magnitude spectrum is a stable property
 of it: a class's spectral envelope recurs across loads at cosine
-$0.944$, yet is not predictable from fault physics: a source-domain
+$0.944$ but is not predictable from fault physics --- a source-domain
 envelope transfers at $0.924$ while one estimated from five
 \emph{target} labels reaches $0.995$. Class identity is thus a
 per-bearing \emph{recording fingerprint}. A calibrated McFadden--Smith twin
@@ -50,8 +50,8 @@ produces nine near-identical
 classes and, trained on twin data alone, reaches macro-F1 $0.123$ (chance
 $0.10$). The few-shot protocol compounds this:
 support and test windows share the fingerprint, so cross-recording evaluation
-lowers macro-F1 by $0.14$--$0.21$ (up to $0.29$) and leaves even the best augmentation
-within $0.013$ of the trivial baseline. Without source data, reproducing the
+lowers macro-F1 by $0.14$--$0.21$ (up to $0.29$) and leaves the best augmentation
+$0.013$ above the trivial baseline. Without source data, reproducing the
 target recording's spectrum --- with colored noise or a per-sample phase
 surrogate --- beats the support baseline at every budget of the standard split,
 while the twin is worse than no augmentation. On Paderborn, where several bearings share each class, class-mean
@@ -115,7 +115,8 @@ a cross-recording protocol the reported macro-F1 drops by $0.14$--$0.21$
 three fault sizes are pooled into one class, and fingerprint
 augmentation ends within $0.015$ of training on the labeled support set alone,
 while the phase surrogate falls $0.06$ behind it
-(Section~\ref{sec:protocol}). We recommend this control for future work.
+(Section~\ref{sec:protocol}). We recommend it for any few-shot result on this
+benchmark.
 \item \textbf{C4 (constructive).} The same mechanism says what an augmentation
 has to supply: the target recording's spectrum, not the fault physics. The
 class envelope is easy to learn from a few labels (cosine $0.995$ at $k=5$),
@@ -184,13 +185,12 @@ to close it. The same gap motivates domain randomization in robotics
 \cite{tobin2017domain}, where the simulator is deliberately not made faithful
 and the burden shifts entirely onto the augmentation distribution.
 
-Our contribution is orthogonal to closing that gap. We ask what
-class-discriminative information the simulated data can carry in the first
-place, given the structure of the benchmark, and we answer it with a negative
-result that no amount of gap-closing can repair: on CWRU the class-conditional
-spectrum is a property of the individual recording rather than of the fault, so
-a simulator with perfect fidelity to the physics still cannot supply the
-contrast that separates the classes.
+We ask a question upstream of that gap: what class-discriminative information
+the simulated data can carry at all, given the structure of the benchmark. On
+CWRU the answer is none, and closing the gap cannot change it. The
+class-conditional spectrum there is a property of the individual recording
+rather than of the fault, so a simulator with perfect fidelity to the physics
+still cannot supply the contrast that separates the classes.
 
 \paragraph{Surrogate data}
 Our phase-randomization control follows the standard surrogate-data procedure
@@ -225,7 +225,7 @@ is reproduced from the raw data by one script released with the code
 For a target load, each class is split in time order: the last $40\%$ of
 windows form the held-out test set; from the first $60\%$, $k$ windows per
 class are drawn (with the seed) as the labeled \emph{support} set, and the rest
-form an unlabeled \emph{pool}. Crucially, the support and test windows come
+form an unlabeled \emph{pool}. The support and test windows come
 from the \emph{same recording}. Section~\ref{sec:protocol} shows how much of
 the reported score that choice accounts for.
 
@@ -237,19 +237,19 @@ time-domain window, $z$-scored sample-wise, and no spectral transform is applied
 before the classifier: the spectral statistics of
 Sections~\ref{sec:diag1} and~\ref{sec:diag2} are diagnostics on the data, not
 features of the model. The backbone is a one-dimensional residual network with a
-$7$-tap convolution (stride $2$, $32$ channels), batch normalisation and ReLU,
+$7$-tap convolution (stride $2$, $32$ channels), batch normalization and ReLU,
 three residual blocks of two $3$-tap convolutions each ($32$, $64$ and $128$
 channels, stride $2$ from the second block), global average pooling, and a
 linear projection to $64$ features. One linear layer maps those features to
 class scores, and the domain discriminator used by the adversarial methods is a
 two-hidden-layer MLP of width $64$ on the same features. The backbone has
 $118\,368$ parameters and the model $127\,403$ including the discriminator.
-Training minimises cross-entropy, plus a binary domain loss where a
+Training minimizes cross-entropy, plus a binary domain loss where a
 discriminator is used, with Adam at a learning rate of $10^{-3}$, batch size
 $64$ and $60$ epochs, $200$ for the Paderborn comparisons of
 Section~\ref{sec:paderborn}; synthetic sets are generated with $400$ windows per
 class. One seed controls the few-shot draw, the synthetic sample generation and
-the weight initialisation jointly.
+the weight initialization jointly.
 
 Bitwise reproducibility is not available on this hardware. Enabling the
 deterministic cuDNN path makes a seed fail to converge --- in our check seed~1's
@@ -267,7 +267,7 @@ We implement a McFadden--Smith style impulse-response twin
 \cite{randall2011rolling} with SKF 6205-2RS geometry, whose
 ball-pass frequencies are computed from the shaft speed. The generator is
 calibrated against real CWRU spectra: the resonance range, the resonance
-bandwidth per defect size, the background-noise colouring, and the
+bandwidth per defect size, the background-noise coloring, and the
 impulse-to-harmonic power ratio were all fitted so that synthetic
 band-energy shares match measured ones. In particular the synthetic peak
 envelope spectrum lands on the correct BPFO, so the twin reproduces the fault
@@ -280,8 +280,8 @@ its parameter space.
 The generator enters the model the way the cited works use theirs: as the
 labeled source of a domain-adversarial configuration adapted to the target load
 (\ml{dt\_dann}, Table~\ref{tab:main}). The failure diagnosed below therefore
-belongs to that template, a simulated source aligned adversarially with the
-target, and not to a particular implementation of it.
+belongs to that template: a simulated source aligned adversarially with the
+target.
 
 \subsection{Twin data are a different domain, and carry no class information}
 Training only on twin data and testing on the real target load
@@ -396,8 +396,7 @@ session. A simulator cannot know which bearing a target recording used. The
 fingerprint is estimable from target labels (Section~\ref{sec:method}) but not
 derivable from fault mechanics. In the terminology of the shortcut-learning
 literature \cite{geirhos2020shortcut}, the classifier learns the recording as
-the shortcut to the label; on this benchmark the shortcut is not merely easier
-than the intended solution but the only signal present.
+the shortcut to the label; here that shortcut is the only signal present.
 
 \section{Evaluation Protocol: Same-Recording Leakage}
 \label{sec:protocol}
@@ -461,13 +460,13 @@ Support load & Training configuration & Same & Cross mean & Cross (to load 3) & 
 \end{tabular}
 \end{table*}
 
-Four conclusions follow.
+Five conclusions follow.
 
 \paragraph{Same-recording evaluation is optimistic by $0.14$--$0.21$}
 Support-only training scores $0.988$--$0.998$ on its own held-out windows but
 only $0.732$--$0.882$ on other recordings (Fig.~\ref{fig:leak}). Every training
-configuration in the table shows the same gap, whose size depends on how the
-classes are defined (paragraph below). A few-shot result on this
+configuration in the table shows the same gap, and how large it is depends on
+how the classes are defined (last paragraph of this subsection). A few-shot result on this
 benchmark that uses the standard split contains this optimism unless a
 cross-recording control is reported alongside it.
 
@@ -475,10 +474,10 @@ cross-recording control is reported alongside it.
 Averaged over the four support loads, cross-recording macro-F1 is $0.840$ for
 support only, $0.854$ for fingerprint augmentation, $0.835$ for adding $400$
 real labeled samples per class, and $0.777$ for phase surrogates. Only the
-surrogate moves away from the baseline by a margin worth acting on, and it
-moves down. Fingerprint augmentation's $+0.013$ average is the mean of
-$-0.029$, $-0.020$, $+0.002$ and $+0.099$ over the four support loads, so it is
-not a gain to build a method on. Adding large amounts of \emph{real} data from
+surrogate separates from the baseline by more than noise, and it separates
+downward. Fingerprint augmentation's $+0.013$ average is the mean of
+$-0.029$, $-0.020$, $+0.002$ and $+0.099$ over the four support loads: two
+losses, a tie and one gain. Adding large amounts of \emph{real} data from
 the same operating condition does not improve cross-recording generalization
 either: the bottleneck is the operating condition, not the sample count.
 
@@ -566,7 +565,7 @@ support a separate statement about outer versus inner race.
 \caption{Class-mean magnitude spectra under the identical, unsmoothed
 statistic of Table~\ref{tab:bench}. Each panel is normalized to its own maximum
 (0\,dB); all four share the same $-75$\,dB floor, the same linear frequency
-axis and the same per-class colours, and the shaded span marks the
+axis and the same per-class colors, and the shaded span marks the
 $2800$--$3300$\,Hz band whose energy fraction is quoted in
 Section~\ref{sec:diag2}. (a)~CWRU, ten classes, one physical specimen each:
 visibly separated. (b)~The physics twin, same statistic: the nine fault classes collapse into one
@@ -577,7 +576,7 @@ whole negative result in one panel --- the simulator produces nine faults whose
 mean spectra are interchangeable, so no classifier trained on them can carry
 the contrast that separates the real classes. (c)~Paderborn as recorded: the
 $100$\,Hz rig line of Section~\ref{sec:paderborn} lands in the $93.75$\,Hz bin
-(with leakage into its neighbour at $109$\,Hz) and carries essentially all the
+(with leakage into its neighbor at $109$\,Hz) and carries essentially all the
 energy, and the three damage
 classes are indistinguishable because everything else lies $60$\,dB below it.
 (d)~The same recordings after a $2$\,kHz high-pass removes that line, so the
@@ -639,7 +638,7 @@ for all of them), healthy, outer-ring and inner-ring alike. In a Hann-windowed
 $4096$-point spectrum that line lands in the bin at $93.75$\,Hz and
 \emph{that single bin} carries $54\%$ of the total spectral energy
 ($53.97$--$54.31\%$ across the 21 bearings); the
-line together with two neighbouring bins on each side carries
+line together with two neighboring bins on each side carries
 $99.5$--$99.8\%$.
 
 Because that single line holds almost all the energy, the coincidence of class
@@ -664,8 +663,8 @@ Section~\ref{sec:protocol} is specific to CWRU. We train one model per seed on
 five bearings per class and evaluate it twice: on held-out windows drawn from the \emph{same} bearings
 ($30\%$ of the training recordings), and on one bearing per class that the model
 has never seen. Both test sets are class-balanced and the metric is macro-F1.
-They are the two endpoints that
-Table~\ref{tab:pb_levels} separates, from that same run.
+They are the two endpoints of the ladder in
+Table~\ref{tab:pb_levels}, from that same run.
 
 \begin{table}[t]
 \centering
@@ -693,9 +692,9 @@ Support only      & $0.992$ & $0.840$ & $+0.152$ \\
 \end{table}
 
 The optimism is $+0.386$, well above the CWRU average and above CWRU's worst
-case. It is a consequence of drawing support and test windows from one
-recording, and it reproduces wherever a benchmark is organized as a small number
-of long recordings. Under a bearing-disjoint protocol the features do retain
+case. It follows from drawing support and test windows from one
+recording, and any benchmark organized as a few long recordings should show the
+same. Under a bearing-disjoint protocol the features do retain
 \emph{some} transferable signal ($0.505$ against $0.333$ chance), but of the
 $0.558$ by which the same-recording score exceeds chance, $0.386$ is optimism.
 
@@ -729,7 +728,7 @@ of windows) is evaluated on three test sets that differ by exactly one factor
 each: L2 moves only the recording session, L3 moves the specimen as well. Same
 condition, epochs and seeds as Table~\ref{tab:pb_leak}; the \emph{no filter}
 column is that table's two endpoints. In the last two columns every window is
-masked in the frequency domain and renormalised before training, and the whole
+masked in the frequency domain and renormalized before training, and the whole
 procedure is repeated from scratch: the notch removes $100$\,Hz and its first
 twenty harmonics with $\pm2$ bins each, and the high-pass is the $2$\,kHz
 control of Table~\ref{tab:bench}.}
@@ -761,8 +760,7 @@ the CWRU protocol cannot distinguish --- ``the model keys on the recording'' and
 ``the model keys on the individual bearing'' --- are therefore both real, with
 the specimen carrying the larger share.
 
-Two qualifications belong here. First, the specimen term is far more variable
-than the session term: dropping it has a standard deviation of $0.209$ against
+The specimen term is far more variable than the session term: dropping it has a standard deviation of $0.209$ against
 $0.046$ for the session drop, and one of ten seeds (seed~3, $L3 = 0.77$) even
 reverses the sign. Which bearing is held out matters more than which session it
 was measured in, as expected if the specimen term is carried by that
@@ -771,13 +769,13 @@ $15$ of the $21$ bearings (five of the six healthy, four of the six inner-ring
 and six of the nine outer-ring), so what varies across seeds is a property of
 specimens in general rather than one unlucky draw.
 
-Second, $L3 = 0.505$ is well above
-chance, so cross-specimen transfer is not zero: part of the fault physics does
+Cross-specimen transfer is not zero either: $L3 = 0.505$ sits well above
+chance, so part of the fault physics does
 survive the change of specimen. Neither term rests on a handful of runs: over
 the ten seeds the session term is positive in all ten and the specimen term in
 nine, a two-sided sign test giving $p = 0.002$ and $p = 0.021$ without any
 normality assumption, and the $95\%$ confidence intervals for the two means are
-$+0.128$ to $+0.193$ and $+0.076$ to $+0.374$. Nor is the decomposition a property of this one network: a ResNet
+$+0.128$ to $+0.193$ and $+0.076$ to $+0.374$. The decomposition does not depend on this network: a ResNet
 with a quarter of the parameters ($30\,099$ against $118\,368$) and the same
 recipe gives $L1 = 0.883$, $L2 = 0.727$, $L3 = 0.537$ --- session $+0.156$,
 specimen $+0.189$, the same ordering and the same total to within $0.04$ (its
@@ -811,10 +809,9 @@ leakage is therefore carried by the dominant line; the rest of it, and the
 whole of the specimen term, lie in the remainder of the spectrum --- the bearing
 resonances and their sidebands, which is where the fault signature itself is.
 
-Discarding more than $99\%$ of the signal energy still leaves a same-recording
-optimism of $0.32$--$0.36$: the effect is not an artefact of one conspicuous
-spectral line, and notch-filtering the input does not remove it.
-Fig.~\ref{fig:pb_levels} draws the same numbers: in (a) the three ladders are
+Removing $99\%$ of the signal energy therefore leaves the same-recording
+optimism at $0.32$--$0.36$.
+Fig.~\ref{fig:pb_levels} draws these numbers: in (a) the three ladders are
 nearly parallel, and in (b) the session bars fall under either filter while the
 specimen bars do not.
 
@@ -879,10 +876,9 @@ The two envelope-based variants sit between those ends. Adding the impulse
 train to the target envelope moves the mean by $+0.036$, $+0.012$ and $-0.004$
 at the three budgets (positive in $7$, $6$ and $4$ of ten paired seeds;
 $p\ge 0.34$), so this benchmark does not resolve whether the physical component
-helps. No augmentation entry averages at chance ($0.333$). The table therefore
-supports a single ordering: in every row the pure twin is below both
-envelope-based variants, and nothing approaches training on the real labeled
-samples.
+helps. The table therefore supports a single ordering: in every row the pure
+twin is below both envelope-based variants, and nothing approaches training on
+the real labeled samples. Not even that baseline reaches chance ($0.333$).
 
 \paragraph{Where the physics stops hurting}
 On CWRU the augmentations that reproduce the target recording's spectrum are
@@ -898,9 +894,7 @@ captures the label and physics is redundant noise. On Paderborn we measured
 that the class-mean fingerprints are identical across classes (margin $+0.003$,
 Table~\ref{tab:bench}); calibrating to them therefore transfers no label
 information, and the only thing left that could carry the label is the impulse
-repetition rate --- the physics. The failure we diagnose therefore lies in
-applying physics-based augmentation to a benchmark whose class labels are bound
-to individual recordings.
+repetition rate --- the physics.
 
 \section{A Constructive Baseline: Target-Domain Envelope Calibration}
 \label{sec:method}
@@ -989,9 +983,8 @@ Method & Accuracy & macro-F1 \\
 
 \subsection{Constrained regimes}
 \label{sec:constrained}
-The standard protocol saturates, so the meaningful comparisons are the
-constrained ones. In the synthesis-only regime (Table~\ref{tab:synth}) the
-physics twin is at chance ($0.123$) while fingerprint-coloured white noise
+In the synthesis-only regime (Table~\ref{tab:synth}) the
+physics twin is at chance ($0.123$) while fingerprint-colored white noise
 reaches $0.910$; adding the physical impulse train drops this to $0.651$, and
 removing the fault-harmonic fine structure from the envelope drops it further
 to $0.524$.
@@ -1010,7 +1003,7 @@ envelopes, which need no target labels, stay below the target ones at every
 budget ($0.844$/$0.923$/$0.979$ against $0.918$/$0.983$/$0.994$; 15, 17 and 15
 of 20 paired runs).
 
-Two features of the table qualify the reading. Adding the impulse train to the
+Adding the impulse train to the
 target envelope changes the mean by at most $0.01$ at $k\le3$ and, at $k=5$,
 only through one seed whose two runs collapse to $0.014$ and $0.112$; apart
 from that seed the $k=5$ difference is $-0.004$. Noise-only augmentation, which
@@ -1062,7 +1055,7 @@ true target (bound)& $1.000$ & $1.000$ & $1.000$ \\
 \footnotesize $^{\dagger}$ bimodal: one seed collapses in both repetitions, to
 $0.014$ (below the $0.10$ chance level) and $0.112$. $^{\ddagger}$ likewise
 bimodal: two of twenty runs fall to $0.239$ and $0.376$, so the mean understates
-the usual behaviour.
+the usual behavior.
 \end{table}
 
 \section{Discussion and Limitations}
@@ -1078,33 +1071,30 @@ it, because a single rig tone and its spectral leakage hold over $99\%$ of the
 energy in every bearing whether healthy or damaged. A benchmark suitable for testing
 physics-based augmentation must satisfy both conditions at once: the label must
 have a physical definition, and the recording must actually expose it. Neither
-of the two most-used public datasets does, and we suggest that establishing this
-be part of benchmark validation rather than something each paper discovers
-separately. The CWRU benchmark has already been criticised on related grounds
-\cite{hendriks2022benchmark}; we add a mechanism and a quantitative control.
-The situation is not unique to this field --- a model can generalise across
-hospitals while relying on a site-specific confounder invisible in the
-acquisition protocol \cite{zech2018variable} --- which is why we state the
-requirement in terms of benchmark construction rather than of any one paper's
-methodology.
+of the two most-used public datasets does, and establishing this belongs in
+benchmark validation. The CWRU benchmark has already been criticized on related
+grounds \cite{hendriks2022benchmark}; we add a mechanism and a quantitative
+control. The situation is not unique to this field: a model can generalize
+across hospitals while relying on a site-specific confounder invisible in the
+acquisition protocol \cite{zech2018variable}.
 
-The failure we diagnose belongs to the \emph{pairing} of a generator with a
-benchmark, not to the generator. The physical component that costs $0.26$
+The failure we diagnose lies in the \emph{pairing} of a generator with a
+benchmark. The physical component that costs $0.26$
 macro-F1 when it has to carry the class alone does no detectable harm once its
 impulse train is layered onto the target spectral envelope: in the no-source
 regime it moves the mean by $+0.009$ and $-0.001$ at $k=1$ and $k=3$
 (Table~\ref{tab:fewshot}), and on Paderborn by $+0.036$, $+0.012$ and $-0.004$
 (Table~\ref{tab:pb_fewshot}). The mechanism accounts for this: where the envelope
 already carries the fingerprint the physics is redundant, and on Paderborn,
-where the fingerprint carries no label, it is the only candidate carrier, which
-that benchmark cannot resolve into a gain. The pure twin
-remains the worst augmentation on \emph{both} benchmarks, and under
-cross-recording evaluation on CWRU no augmentation reliably beats training on
-the real labeled support samples.
+where the fingerprint carries no label, it is the only candidate carrier, though
+the benchmark is too noisy to resolve that into a gain. The pure twin is the
+worst augmentation on \emph{both} benchmarks. Under cross-recording evaluation
+on CWRU the best augmentation scores $0.854$ against $0.840$ for training on the
+real labeled support samples, a margin carried by one support load.
 
 \paragraph{Implications for reported numbers} Two papers reporting the same
-method on CWRU may differ by $0.1$--$0.3$ macro-F1 purely because of how the
-few-shot split was drawn. Future work should state whether support and test
+method on CWRU may differ by $0.1$--$0.3$ macro-F1 because of how the few-shot
+split was drawn. Future work should state whether support and test
 come from the same recording, and ideally report both. The same control is
 cheap wherever a dataset contains several independent specimens per class: hold
 out specimens, not windows. Our own experience is a case in point: three seeds
@@ -1214,14 +1204,14 @@ specimens rather than of the classes. Same-recording evaluation there is still
 optimistic, by $+0.386$, of which $+0.161$ is attributable to the recording
 session alone and $+0.225$ to the change of specimen. Removing the rig tone,
 which holds $93\%$ of the spectral energy, leaves $+0.321$, still dominated by
-the specimen term, so the optimism is not an artefact of that line. There the
+the specimen term. There the
 labels follow the fault kinematics and the fingerprints carry none of them, and
 the physical component that costs $0.26$ macro-F1 on CWRU does no detectable
-harm. The pure twin is still the worst augmentation, and under cross-recording
-or bearing-disjoint evaluation no augmentation on either benchmark reliably
-beats training on the real labeled support samples. Before trusting a result,
-positive or negative, on a new benchmark, check it against the six properties
-of Table~\ref{tab:checklist}.
+harm. The pure twin is the worst augmentation on both benchmarks, and under
+cross-recording or bearing-disjoint evaluation no augmentation beats training
+on the real labeled samples by more than $0.015$. Table~\ref{tab:checklist}
+lists the six checks we would run before trusting a result, positive or
+negative, on a new benchmark.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

@@ -160,14 +160,17 @@ def fig_leakage():
     fig, ax = plt.subplots(1, 2, figsize=(7.16, 2.25))
 
     for j, c in enumerate(cfgs):
-        d = [LEAK[l][c][1] - LEAK[l][c][0] for l in loads]
+        # 乐观量 = 同录制 - 跨录制(与表 III 的 Optimism 列同号);画成正值,
+        # 否则图与图注"every bar is positive"矛盾(2026-10-31 修正,原为 cross - same)。
+        d = [LEAK[l][c][0] - LEAK[l][c][1] for l in loads]
         ax[0].bar(x + (j - 1.5) * w, d, w, color=col[j], label=c)
     ax[0].axhline(0, color="k", lw=0.6)
     ax[0].set_xticks(x)
     ax[0].set_xticklabels(loads)
+    ax[0].set_ylim(0, 0.325)
     ax[0].set_ylabel(r"Optimism $\Delta$ (macro-F1)")
     ax[0].set_title("(a) Same-recording minus cross-recording", fontsize=8)
-    ax[0].legend(fontsize=5.2, ncol=2, loc="lower left", handlelength=1.0,
+    ax[0].legend(fontsize=5.2, ncol=2, loc="upper left", handlelength=1.0,
                  columnspacing=0.7, labelspacing=0.2)
 
     w2 = 0.36
