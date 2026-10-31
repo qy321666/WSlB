@@ -17,7 +17,8 @@
   source_only  : 源域有监督(不用任何目标标签)—— 零标签参照
   dann         : 源域 + 目标无标签池的对抗域适应(不用任何目标标签)
 
-用法: python tools/probe_leakage.py [tgt_load|all] [epochs] [n_seed] [k]
+用法: python tools/probe_leakage.py [tgt_load|all] [epochs] [n_seed] [k] [n_repeat]
+      python tools/probe_leakage.py all 60 10 5 2 --suffix=_s10   # 10 seed,写到 _s10 文件
 输出: results_paper/tab_leak.json(供 tools/verify_paper_numbers.py 逐条核对表 III)。
       tab:leak 的每一行 = 一次以该 load 为支撑域的运行,所以取 `all` 会跑 4 次。
 """
@@ -212,25 +213,31 @@ def run(tgt_load=3, epochs=60, n_seed=3, k=5, n_repeat=1):
 
 
 def main():
-    a = sys.argv[1] if len(sys.argv) > 1 else "3"
-    epochs = int(sys.argv[2]) if len(sys.argv) > 2 else 60
-    n_seed = int(sys.argv[3]) if len(sys.argv) > 3 else 3
-    k = int(sys.argv[4]) if len(sys.argv) > 4 else 5
-    n_repeat = int(sys.argv[5]) if len(sys.argv) > 5 else 1
+    pos = [a for a in sys.argv[1:] if not a.startswith("--")]
+    opt = {a.split("=", 1)[0].lstrip("-"): a.split("=", 1)[1]
+           for a in sys.argv[1:] if a.startswith("--") and "=" in a}
+    a = pos[0] if len(pos) > 0 else "3"
+    epochs = int(pos[1]) if len(pos) > 1 else 60
+    n_seed = int(pos[2]) if len(pos) > 2 else 3
+    k = int(pos[3]) if len(pos) > 3 else 5
+    n_repeat = int(pos[4]) if len(pos) > 4 else 1
+    suffix = opt.get("suffix", "")
+    out_json = OUT_JSON.replace(".json", f"{suffix}.json")
     loads = (0, 1, 2, 3) if a == "all" else (int(a),)
 
-    res = json.load(open(OUT_JSON, encoding="utf-8")) if (
-        a != "all" and os.path.exists(OUT_JSON)) else {"by_support_load": {}}
+    res = json.load(open(out_json, encoding="utf-8")) if (
+        a != "all" and os.path.exists(out_json)) else {"by_support_load": {}}
     # 产物自己写清来源:每格的 n_runs = n_seed x n_repeat,provenance 记下是哪条命令跑出来的。
     # (旧版只有 merge_runs 会写 provenance,于是"一次跑多遍"的产物反而没有出处。)
     res["provenance"] = (f"python tools/probe_leakage.py {'all' if a == 'all' else a} "
-                         f"{epochs} {n_seed} {k} {n_repeat};"
+                         f"{epochs} {n_seed} {k} {n_repeat}"
+                         f"{(' --suffix=' + suffix) if suffix else ''};"
                          f"每格 {n_seed} seed x {n_repeat} 遍 = {n_seed * n_repeat} runs")
     for l in loads:
         res["by_support_load"][str(l)] = run(l, epochs, n_seed, k, n_repeat)
-        os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
-        json.dump(res, open(OUT_JSON, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-        print(f"[save] {OUT_JSON}  (已含支撑域 {sorted(res['by_support_load'], key=int)})")
+        os.makedirs(os.path.dirname(out_json), exist_ok=True)
+        json.dump(res, open(out_json, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"[save] {out_json}  (已含支撑域 {sorted(res['by_support_load'], key=int)})")
 
 
 if __name__ == "__main__":

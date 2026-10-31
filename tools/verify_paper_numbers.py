@@ -514,18 +514,16 @@ def table_leak():
         print("  [--      ] 尚无落盘产物:先跑 python tools/probe_leakage.py all")
         return
     d = json.load(open(path, encoding="utf-8"))["by_support_load"]
-    # 表内值取自 6 次运行(3 seed x 2 遍)的合并产物,单元格四舍五入到 3 位。
-    # 2026-10-06 修复 CWRU 99.mat 的读取(负载 2 的 NORMAL 类原先读了 1 hp 的录制)后整表重跑,
-    # 下面的声称值随之更新 —— 变化最大的是 load2 行与各行的"测 load2"列。
+    # 表内值取自 20 次运行(10 seed x 2 遍)的合并产物,单元格四舍五入到 3 位。
     CLAIM = {  # 支撑域 -> (support_only, +fp_aug, +surrogate, +true_aug) 的 (same, cross, cross->3)
-        "0": ((0.987, 0.868, 0.696), (0.985, 0.837, 0.709),
-              (0.989, 0.826, 0.737), (1.000, 0.864, 0.695)),
-        "1": ((0.988, 0.871, 0.684), (0.988, 0.837, 0.691),
-              (0.992, 0.811, 0.661), (1.000, 0.894, 0.714)),
-        "2": ((0.999, 0.871, 0.767), (0.946, 0.847, 0.733),
-              (0.798, 0.684, 0.596), (1.000, 0.929, 0.881)),
-        "3": ((0.998, 0.725, None), (0.995, 0.809, None),
-              (0.997, 0.686, None), (1.000, 0.688, None)),
+        "0": ((0.989, 0.880, 0.718), (0.987, 0.851, 0.730),
+              (0.979, 0.747, 0.640), (0.976, 0.837, 0.681)),
+        "1": ((0.988, 0.869, 0.691), (0.993, 0.849, 0.694),
+              (0.987, 0.806, 0.654), (1.000, 0.907, 0.748)),
+        "2": ((0.998, 0.882, 0.798), (0.990, 0.884, 0.805),
+              (0.993, 0.848, 0.770), (0.969, 0.878, 0.844)),
+        "3": ((0.993, 0.732, None), (0.995, 0.831, None),
+              (0.994, 0.705, None), (1.000, 0.719, None)),
     }
     names = ("support_only", "+fp_aug", "+surrogate", "+true_aug")
     for L in ("0", "1", "2", "3"):
@@ -540,12 +538,12 @@ def table_leak():
                 chk("表III", f"load{L} {name:<12} cross->3", r["cross_to"]["3"]["mean"], c3)
     # 均值行(tab:leak 底部)与 §Protocol 正文。
     # 注意:表 V(tab:pb_leak)里有一行 "\emph{CWRU, for comparison} … Support only"
-    # 重复引用这里的 support_only 三个数(0.993 / 0.834 / 0.159)—— 改表 III 时必须同步改它,
+    # 重复引用这里的 support_only 三个数(0.992 / 0.840 / 0.152)—— 改表 III 时必须同步改它,
     # 否则两处会各说各话(本脚本只核一处,因为另一处是同一来源)。
-    for name, sm, cm, om in (("support_only", 0.993, 0.834, 0.159),
-                             ("+fp_aug", 0.979, 0.832, 0.146),
-                             ("+surrogate", 0.944, 0.752, 0.192),
-                             ("+true_aug", 1.000, 0.844, 0.156)):
+    for name, sm, cm, om in (("support_only", 0.992, 0.840, 0.152),
+                             ("+fp_aug", 0.991, 0.854, 0.138),
+                             ("+surrogate", 0.988, 0.777, 0.211),
+                             ("+true_aug", 0.986, 0.835, 0.151)):
         rs = [d[L]["rows"][name] for L in ("0", "1", "2", "3") if L in d]
         if len(rs) < 4:
             continue
@@ -555,32 +553,46 @@ def table_leak():
             float(np.mean([r["optimism"] for r in rs])), om)
     # §Protocol 里以区间形式给出的三个量(区间写法最容易与数据脱节,单独核)
     lab = [np.mean([d[L]["rows"][n]["optimism"] for L in "0123"]) for n in names]
-    chk("表III", "带标签配置的均值乐观量 下限", min(lab), 0.146, tol=0.001)
-    chk("表III", "带标签配置的均值乐观量 上限", max(lab), 0.192, tol=0.001)
+    chk("表III", "带标签配置的均值乐观量 下限", min(lab), 0.138, tol=0.001)
+    chk("表III", "带标签配置的均值乐观量 上限", max(lab), 0.211, tol=0.001)
     allop = [d[L]["rows"][n]["optimism"] for L in "0123" for n in names]
-    chk("表III", "全部单元格最大乐观量", max(allop), 0.312, tol=0.001)
+    chk("表III", "全部单元格最大乐观量", max(allop), 0.289, tol=0.001)
     cr = [d[L]["rows"]["support_only"]["cross_mean"] for L in "0123"]
-    chk("表III", "support_only 跨录制 下限", min(cr), 0.725, tol=0.001)
-    chk("表III", "support_only 跨录制 上限", max(cr), 0.871, tol=0.001)
+    chk("表III", "support_only 跨录制 下限", min(cr), 0.732, tol=0.001)
+    chk("表III", "support_only 跨录制 上限", max(cr), 0.882, tol=0.001)
+    same_rng = [d[L]["rows"]["support_only"]["same_mean"] for L in "0123"]
+    chk("表III", "support_only 同录制 下限", min(same_rng), 0.988, tol=0.001)
+    chk("表III", "support_only 同录制 上限", max(same_rng), 0.998, tol=0.001)
     # §Protocol「指纹增广是正则化器」一段:只在支撑录制不典型时才占优
-    for L in "012":
-        chk("表III", f"load{L} 指纹增广劣于仅支撑集",
-            d[L]["rows"]["support_only"]["cross_mean"] - d[L]["rows"]["+fp_aug"]["cross_mean"],
-            0.031 if L == "0" else (0.034 if L == "1" else 0.024), tol=0.001)
-    chk("表III", "load3 指纹增广优于仅支撑集",
-        d["3"]["rows"]["+fp_aug"]["cross_mean"] - d["3"]["rows"]["support_only"]["cross_mean"],
-        0.084, tol=0.001)
+    diffs = {L: (d[L]["rows"]["support_only"]["cross_mean"]
+                 - d[L]["rows"]["+fp_aug"]["cross_mean"]) for L in "0123"}
+    chk("表III", "load0 指纹增广劣于仅支撑集", diffs["0"], 0.029, tol=0.001)
+    chk("表III", "load1 指纹增广劣于仅支撑集", diffs["1"], 0.020, tol=0.001)
+    chk("表III", "load2 指纹增广与仅支撑集持平", diffs["2"], -0.002, tol=0.001)
+    chk("表III", "load3 指纹增广优于仅支撑集", -diffs["3"], 0.099, tol=0.001)
+    chk("表III", "四支撑域平均 指纹增广减仅支撑集",
+        float(np.mean([-v for v in diffs.values()])), 0.013, tol=0.002)
+    # 表 V 对照行与图 1(b) 里两次引用的"真实样本 vs 仅支撑集"差
+    chk("表III", "真实样本均值减仅支撑集",
+        float(np.mean([d[L]["rows"]["+true_aug"]["cross_mean"]
+                       - d[L]["rows"]["support_only"]["cross_mean"] for L in "0123"])),
+        -0.005, tol=0.002)
     # §Protocol「load 3 是异常工况」一段引用的无目标标签行
     if "source_only" in d["0"]["rows"]:
-        src_same = {L: d[L]["rows"]["source_only"]["same_mean"] for L in ("0", "1", "2", "3")}
-        chk("表III", "无标签源模型(load0--2 最高)", max(src_same[l] for l in "012"), 1.000)
-        # 0.984 -> 0.933:load2 的 NORMAL 换成 2 hp 录制后,无标签源模型在 load2 上明显变差 ——
-        # 原先那份 1 hp 录制恰好与源域更"像"。正文的 0.98--1.00 因此改为 0.93--1.00。
-        chk("表III", "无标签源模型(load0--2 最低)", min(src_same[l] for l in "012"), 0.933)
-        chk("表III", "无标签源模型测 load3", src_same["3"], 0.707)
+        # 正文说"在 load 0--2 之间迁移 0.87--1.00",指六个有向配对,不只是 S0->SL 那三条。
+        pairs = []
+        for L in "012":
+            pairs.append(d[L]["rows"]["source_only"]["same_mean"])
+            pairs += [v["mean"] for m, v in d[L]["rows"]["source_only"]["cross_to"].items()
+                      if m in "012"]
+        chk("表III", "无标签源模型(load0--2 最高)", max(pairs), 1.000, tol=0.001)
+        chk("表III", "无标签源模型(load0--2 最低)", min(pairs), 0.865, tol=0.001)
+        into3_src = [d[L]["rows"]["source_only"]["cross_to"]["3"]["mean"] for L in "012"]
+        chk("表III", "无标签源模型测 load3 最低", min(into3_src), 0.634, tol=0.001)
+        chk("表III", "无标签源模型测 load3 最高", max(into3_src), 0.681, tol=0.001)
         into3 = [d[L]["rows"]["support_only"]["cross_to"]["3"]["mean"] for L in ("0", "1", "2")]
-        chk("表III", "支撑域(load0--2)测 load3 最低", min(into3), 0.684)
-        chk("表III", "支撑域(load0--2)测 load3 最高", max(into3), 0.767)
+        chk("表III", "支撑域(load0--2)测 load3 最低", min(into3), 0.691)
+        chk("表III", "支撑域(load0--2)测 load3 最高", max(into3), 0.798)
 
 
 # ------------------------------------------------------- 表 IX：CWRU 无源少样本

@@ -22,7 +22,7 @@ python tools/verify_paper_numbers.py artifacts
 
 Reads every artifact in `results_paper/`, `results_pb/` and `results/final/`, recomputes the
 quantity each table reports, compares it with the value printed in the manuscript, and prints
-one line per check. **300 checks**; exit code 0 means all agree, exit code 1 means a mismatch
+one line per check. **305 checks**; exit code 0 means all agree, exit code 1 means a mismatch
 and the offending rows are printed.
 
 Requirements: Python 3 with numpy and scipy (`requirements.txt`).
@@ -31,7 +31,7 @@ Requirements: Python 3 with numpy and scipy (`requirements.txt`).
 
 ```bash
 python tools/verify_paper_numbers.py raw     # 40 further checks
-python tools/verify_paper_numbers.py all     # all 340
+python tools/verify_paper_numbers.py all     # all 345
 ```
 
 `raw` recomputes the deterministic statistics of Table 2, Table 4, the "Diagnosis II" section
@@ -80,7 +80,7 @@ Two different kinds of claim; they should not be conflated.
 | | how it is verified | checks |
 |---|---|---|
 | Tables 2 and 4, "Diagnosis II", bench tone | recomputed from the raw signals — deterministic given the data | 40 |
-| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 300 |
+| Tables 1, 3, 5, 6, 7, 8, 9 | the manuscript agrees with the stored artifacts | 305 |
 
 For the second group the check establishes **manuscript ↔ artifact** agreement, not
 **artifact ↔ fresh run**. Those tables come from training, and this hardware is not run-to-run
@@ -99,7 +99,7 @@ Every numbered table has an on-disk artifact and a computing function in
 |---|---|---|---|
 | Table 1 `tab:synth` | `results_paper/tab_synth.json` (merged from `tab_synth_10a.json`, `tab_synth_10b.json`; n_repeat=2 × 10 seeds) | `python tools/probe_fp.py 3 5 400 40 10 2` | `table_synth` |
 | Table 2 `tab:classsep` | none — recomputed from `data/cwru` | `python tools/probe_classsep.py` | `table_classsep` (raw) |
-| Table 3 `tab:leak` | `results_paper/tab_leak.json` (n_repeat=2 × 3 seeds) | `python tools/probe_leakage.py all 60 3 5 2` | `table_leak` |
+| Table 3 `tab:leak` | `results_paper/tab_leak.json` (n_repeat=2 × 10 seeds; the superseded 6-run artifact is kept as `tab_leak_n6legacy.json`) | `python tools/probe_leakage.py all 60 10 5 2 --suffix=_s10`, then copy `tab_leak_s10.json` to `tab_leak.json` | `table_leak` |
 | Table 4 `tab:bench` | `results_pb/spectra_bench.json` (recomputed anyway) | `python tools/probe_spectra.py` | `table_bench` (raw) |
 | Table 5 `tab:pb_leak` | `results_pb/pb_levels.json` (10 seeds, 200 epochs), plus `results_pb/pb_split_coverage.json` for the bearing coverage quoted in the text (15 of 21, `python tools/pb_split_coverage.py 10`) | `python tools/probe_pb_levels.py 200 10` | `table_pb_levels` |
 | Table 6 `tab:pb_levels` | `results_pb/pb_levels.json`, plus `results_pb/pb_levels_notch.json` and `pb_levels_highpass.json` for the two filtered columns (`pb_levels.log`, `pb_levels_notch.log`, `pb_levels_highpass.log`) | `python tools/probe_pb_levels.py 200 10`; add `--filter=notch` and `--filter=highpass` for the last two columns | `table_pb_levels`, `table_pb_filter` |
@@ -118,6 +118,11 @@ Notes.
   `d_twin_k5_n5legacy.json`, `d_twin_k20_n3legacy.json` and `d_twin_k50_n3legacy.json`; it is
   not the source of any number in the paper, and its k=20/50 rows are systematically
   optimistic (that is why the table was extended).
+- Table 3's cells each average 20 runs (10 seeds, repeated twice). The earlier 6-run
+  artifact used before 2026-10-31 is kept as `results_paper/tab_leak_n6legacy.json`; it is not
+  the source of any number in the paper. Its load-3 fingerprint row was the outlier that made
+  the earlier text speak of an "only sometimes" benefit; at 20 runs the same effect is
+  +0.099 and the loads 0--2 rows are stable at --0.02 to +0.00.
 - Table 9's cells each average 20 runs (10 seeds, repeated twice). The earlier 3-seed run
   used before 2026-10-30 is kept as `results_paper/tab_fewshot_n6legacy.json`; it is not the
   source of any number in the paper, and its support-only row is optimistic by 0.05 at k=1
@@ -139,9 +144,9 @@ Notes.
   refuses to merge runs whose configurations differ. The per-run inputs are kept alongside them.
 - `results_paper/tab_synth_run1.json`, `tab_synth_10a.json`, `tab_synth_10b.json` and
   `tab_synth_pooled.json` are the provenance chain of the merged Table 1 artifact. For Table 3
-  the post-fix run was a single two-repeat invocation; its console transcript is
-  `results_paper/tab_leak.log` and the command is recorded in the artifact's own `provenance`
-  field.
+  the current artifact comes from a single ten-seed, two-repeat invocation; its console
+  transcript is `results_paper/tab_leak_s10.log` (the earlier 6-run transcript is
+  `tab_leak.log`) and the command is recorded in the artifact's own `provenance` field.
 
 ## 5. Layout
 
