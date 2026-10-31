@@ -425,6 +425,14 @@ def table_pb_levels():
         p_sign = 2.0 * sum(comb(len(v), i) for i in range(npos, len(v) + 1)) / 2 ** len(v)
         chk("表V", f"{label} 符号检验 p", p_sign,
             {"会话项": 0.002, "试件项": 0.021}[label], tol=0.001)
+    # 正文:试件项比会话项离散得多(0.209 对 0.046),且有一个 seed 反号(seed 3,L3=0.77)
+    sess_d = np.array(d["per_seed"]["L1"]) - np.array(d["per_seed"]["L2"])
+    spec_d = np.array(d["per_seed"]["L2"]) - np.array(d["per_seed"]["L3"])
+    chk("表V", "会话项跨 seed 标准差", float(sess_d.std(ddof=1)), 0.046, tol=0.001)
+    chk("表V", "试件项跨 seed 标准差", float(spec_d.std(ddof=1)), 0.209, tol=0.001)
+    chk("表V", "试件项反号的 seed 数", float((spec_d < 0).sum()), 1.0, tol=0.0)
+    chk("表V", "反号 seed(3)的 L3", float(d["per_seed"]["L3"][3]), 0.77, tol=0.005)
+
     # 正文:换 backbone(1/4 参数的 ResNet)复核三层分解
     bb_p = os.path.join(HERE, "results_pb", "pb_levels_smallresnet.json")
     if os.path.exists(bb_p):

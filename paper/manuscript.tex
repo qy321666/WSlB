@@ -118,7 +118,7 @@ and test windows from the same recording, so both share the fingerprint. Under
 a cross-recording protocol the reported macro-F1 drops by $0.14$--$0.21$
 (average over four support domains; up to $0.29$), falling to $0.02$ when the
 three fault sizes are pooled into one class, and fingerprint
-augmentation ends within $0.015$ of training on the labeled support set alone,
+augmentation averages within $0.015$ of training on the labeled support set,
 while the phase surrogate falls $0.06$ behind it
 (Section~\ref{sec:protocol}). We recommend it for any few-shot result on this
 benchmark.
@@ -1223,9 +1223,11 @@ which holds $93\%$ of the energy of the untapered training window, leaves $+0.32
 the specimen term. There the
 labels follow the fault kinematics and the fingerprints carry none of them, and
 the physical component that costs $0.26$ macro-F1 on CWRU does no detectable
-harm. The pure twin is the worst augmentation on both benchmarks, and under
-cross-recording or bearing-disjoint evaluation no augmentation beats training
-on the real labeled samples by more than $0.015$. Table~\ref{tab:checklist}
+harm. The pure twin is the worst augmentation on both benchmarks. Under
+cross-recording evaluation the best augmentation, fingerprint augmentation,
+averages $+0.013$ over training on the real labeled samples --- two losses, a
+tie and one gain across the four support loads --- and on Paderborn no
+augmentation reaches the real samples in any row. Table~\ref{tab:checklist}
 lists the six checks we would run before trusting a result, positive or
 negative, on a new benchmark.
 
