@@ -9,6 +9,11 @@
 \usepackage{url}
 \usepackage[colorlinks=true,allcolors=blue]{hyperref}
 
+% IEEEtran numbers \paragraph at level 4 (rendered as ``a)''). Our run-in
+% headings are labels rather than numbered items, so stop numbering one
+% level higher.
+\setcounter{secnumdepth}{3}
+
 \newcommand{\ml}[1]{\textsc{#1}}
 
 \begin{document}
@@ -143,7 +148,8 @@ $+0.386$ macro-F1 there; because each Paderborn bearing was measured $20$
 times, that optimism can be split by re-evaluating on a different
 \emph{recording of the same bearings}, which gives $+0.161$ for the session
 and a further $+0.225$ for the change of specimen, and it survives removal of
-the rig tone that holds $93\%$ of the spectral energy ($+0.321$ remains). A twin whose physics
+the rig tone that holds $93\%$ of the energy of the untapered training window
+($+0.321$ remains). A twin whose physics
 exactly matches the class definition is still the worst augmentation tried, and
 the physical component that costs $0.26$ macro-F1 on CWRU does no detectable
 harm here --- an asymmetry the mechanism explains
@@ -396,7 +402,8 @@ session. A simulator cannot know which bearing a target recording used. The
 fingerprint is estimable from target labels (Section~\ref{sec:method}) but not
 derivable from fault mechanics. In the terminology of the shortcut-learning
 literature \cite{geirhos2020shortcut}, the classifier learns the recording as
-the shortcut to the label; here that shortcut is the only signal present.
+the shortcut to the label, and with one recording per class the shortcut
+separates the classes perfectly.
 
 \section{Evaluation Protocol: Same-Recording Leakage}
 \label{sec:protocol}
@@ -809,8 +816,8 @@ leakage is therefore carried by the dominant line; the rest of it, and the
 whole of the specimen term, lie in the remainder of the spectrum --- the bearing
 resonances and their sidebands, which is where the fault signature itself is.
 
-Removing $99\%$ of the signal energy therefore leaves the same-recording
-optimism at $0.32$--$0.36$.
+Even removing $93\%$ of the signal energy leaves the same-recording optimism
+at $0.32$--$0.36$.
 Fig.~\ref{fig:pb_levels} draws these numbers: in (a) the three ladders are
 nearly parallel, and in (b) the session bars fall under either filter while the
 specimen bars do not.
@@ -878,7 +885,8 @@ at the three budgets (positive in $7$, $6$ and $4$ of ten paired seeds;
 $p\ge 0.34$), so this benchmark does not resolve whether the physical component
 helps. The table therefore supports a single ordering: in every row the pure
 twin is below both envelope-based variants, and nothing approaches training on
-the real labeled samples. Not even that baseline reaches chance ($0.333$).
+the real labeled samples. The real-sample baseline does not exceed chance
+($0.312$--$0.348$ against $0.333$).
 
 \paragraph{Where the physics stops hurting}
 On CWRU the augmentations that reproduce the target recording's spectrum are
@@ -1203,7 +1211,7 @@ $0.626$ on CWRU), so CWRU's class separation is a property of individual
 specimens rather than of the classes. Same-recording evaluation there is still
 optimistic, by $+0.386$, of which $+0.161$ is attributable to the recording
 session alone and $+0.225$ to the change of specimen. Removing the rig tone,
-which holds $93\%$ of the spectral energy, leaves $+0.321$, still dominated by
+which holds $93\%$ of the energy of the untapered training window, leaves $+0.321$, still dominated by
 the specimen term. There the
 labels follow the fault kinematics and the fingerprints carry none of them, and
 the physical component that costs $0.26$ macro-F1 on CWRU does no detectable

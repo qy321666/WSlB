@@ -163,6 +163,13 @@ def diag2():
             for s, t in itertools.combinations((0, 1, 2, 3), 2)]
     chk("§II", "全部 6 对均值", np.mean(allp), 0.944)
 
+    # §Method「k=5 估计的包络已很准」:目标域 load3,k=5 支撑 vs 全量
+    sup, _, _ = SN.split_target_fewshot(X[3], y[3], 5, 0)
+    A5 = SN.estimate_fingerprints(X[3][sup], y[3][sup], nc, window=SN.WINDOW, smooth=5)
+    c5 = [SN.cos(A5[i], A[3][i]) for i in range(nc)]
+    chk("§Method", "k=5 包络估计 vs 全量(均值)", np.mean(c5), 0.995)
+    chk("§Method", "k=5 包络估计 vs 全量(最差类)", np.min(c5), 0.989)
+
     print("\n§Diagnosis II / 图 2  —— 2800--3300 Hz 频带能量占比与两两 dB 间距")
     be = SN.band_energy(classes, X, y, nc)
     r, t = be["真实 load0,九个故障类"], be["物理孪生, 九个故障类"]

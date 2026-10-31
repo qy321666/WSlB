@@ -31,7 +31,7 @@ Requirements: Python 3 with numpy and scipy (`requirements.txt`).
 
 ```bash
 python tools/verify_paper_numbers.py raw     # 40 further checks
-python tools/verify_paper_numbers.py all     # all 358
+python tools/verify_paper_numbers.py all     # all 360
 ```
 
 `raw` recomputes the deterministic statistics of Table 2, Table 4, the "Diagnosis II" section
